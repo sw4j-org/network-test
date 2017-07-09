@@ -55,8 +55,8 @@ public class ConnectionReplyRunnable implements Runnable {
         Writer responseWriter;
         Reader requestReader;
         try {
-            responseWriter = new OutputStreamWriter(this.socket.getOutputStream());
-            requestReader = new InputStreamReader(this.socket.getInputStream());
+            responseWriter = new OutputStreamWriter(this.socket.getOutputStream(), "UTF-8");
+            requestReader = new InputStreamReader(this.socket.getInputStream(), "UTF-8");
         } catch (IOException ioex) {
             LOG.log(Level.WARNING, "Error while getting input or output stream.", ioex);
             try {
