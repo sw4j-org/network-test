@@ -34,13 +34,13 @@ import java.util.logging.Logger;
  *
  * @author Uwe Plonus &lt;u.plonus@gmail.com&gt;
  */
-public class ConnectionReplyRunnable implements Runnable {
+public class ConnectionTimeReplySocketRunner implements Runnable {
 
-    private static final Logger LOG = Logger.getLogger(ConnectionReplyRunnable.class.getName());
+    private static final Logger LOG = Logger.getLogger(ConnectionTimeReplySocketRunner.class.getName());
 
     private final Socket socket;
 
-    public ConnectionReplyRunnable(Socket socket) {
+    public ConnectionTimeReplySocketRunner(Socket socket) {
         if (socket == null) {
             throw new NullPointerException("Socket may not be null.");
         }

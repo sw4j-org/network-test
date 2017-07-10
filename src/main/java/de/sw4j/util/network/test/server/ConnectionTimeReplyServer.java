@@ -23,13 +23,13 @@ import java.net.Socket;
  *
  * @author Uwe Plonus &lt;u.plonus@gmail.com&gt;
  */
-public class ConnectionReplyServer {
+public class ConnectionTimeReplyServer {
 
     public static void main(String... args) throws Exception {
         ServerSocket serverSocket = new ServerSocket(9099);
         while (true) {
             Socket socket = serverSocket.accept();
-            ConnectionReplyRunnable run = new ConnectionReplyRunnable(socket);
+            ConnectionTimeReplySocketRunner run = new ConnectionTimeReplySocketRunner(socket);
             Thread t = new Thread(run);
             t.start();
         }
