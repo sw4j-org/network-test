@@ -34,13 +34,13 @@ import java.util.logging.Logger;
  *
  * @author Uwe Plonus &lt;u.plonus@gmail.com&gt;
  */
-public class ConnectionTimeReplySocketRunner implements Runnable {
+public class ConnectionTimeReplyServerSocketRunner implements Runnable {
 
-    private static final Logger LOG = Logger.getLogger(ConnectionTimeReplySocketRunner.class.getName());
+    private static final Logger LOG = Logger.getLogger(ConnectionTimeReplyServerSocketRunner.class.getName());
 
     private final Socket socket;
 
-    public ConnectionTimeReplySocketRunner(Socket socket) {
+    public ConnectionTimeReplyServerSocketRunner(Socket socket) {
         if (socket == null) {
             throw new NullPointerException("Socket may not be null.");
         }
@@ -49,6 +49,8 @@ public class ConnectionTimeReplySocketRunner implements Runnable {
 
     @Override
     public void run() {
+        DateTimeFormatter dtf = DateTimeFormatter.ISO_INSTANT;
+
         char[] request = new char[1024];
         StringBuilder reply = new StringBuilder();
         StringBuilder log = new StringBuilder();
@@ -82,7 +84,6 @@ public class ConnectionTimeReplySocketRunner implements Runnable {
             LOG.log(Level.WARNING, "Error while receiving request.", ioex);
             return;
         }
-        DateTimeFormatter dtf = DateTimeFormatter.ISO_INSTANT;
         Instant sent;
         try {
             sent = Instant.from(dtf.parse(reply));
@@ -94,14 +95,15 @@ public class ConnectionTimeReplySocketRunner implements Runnable {
         reply.append("\n");
         try {
             reply.append(dtf.format(now));
-        } catch (DateTimeException dtpex) {
-            LOG.log(Level.WARNING, "Error while formating the response.", dtpex);
+        } catch (DateTimeException dtex) {
+            LOG.log(Level.WARNING, "Error while formating the response.", dtex);
             return;
         }
+        reply.append("\n");
         log.append(reply);
-        log.append("\n");
         Duration duration = Duration.between(sent, now);
         log.append(duration.toString());
+        log.append("\n");
         LOG.info(log.toString());
         try {
             responseWriter.write(reply.toString());
@@ -114,6 +116,7 @@ public class ConnectionTimeReplySocketRunner implements Runnable {
             this.socket.close();
         } catch (IOException ioex) {
             LOG.log(Level.INFO, "Ignoring exception during socket close.", ioex);
+            return;
         }
     }
 

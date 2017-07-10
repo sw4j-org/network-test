@@ -14,25 +14,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.sw4j.util.network.test.server;
+package de.sw4j.util.network.test.client;
 
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
  * @author Uwe Plonus &lt;u.plonus@gmail.com&gt;
  */
-public class ConnectionTimeReplyServer {
+public class ConnectionTimeReplyClient {
 
     public static void main(String... args) throws Exception {
-        ServerSocket serverSocket = new ServerSocket(9099);
-        while (true) {
-            Socket socket = serverSocket.accept();
-            ConnectionTimeReplyServerSocketRunner run = new ConnectionTimeReplyServerSocketRunner(socket);
-            Thread t = new Thread(run);
-            t.start();
+        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+        ConnectionTimeReplyClientSocketRunner runner = new ConnectionTimeReplyClientSocketRunner();
+        executorService.scheduleAtFixedRate(runner, 0, 10, TimeUnit.SECONDS);
+        while (!runner.hasError()) {
         }
+        executorService.shutdown();
     }
 
 }
