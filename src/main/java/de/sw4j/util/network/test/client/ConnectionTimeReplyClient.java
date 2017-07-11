@@ -20,6 +20,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -27,16 +29,28 @@ import java.util.concurrent.TimeUnit;
  */
 public class ConnectionTimeReplyClient {
 
+    private static final Logger LOG = Logger.getLogger(ConnectionTimeReplyClientSocketRunner.class.getName());
+
+    private static final double[] SERIES = {1.0, 1.6, 2.5, 4.0, 6.3};
+
     public static void main(String... args) throws Exception {
         ScheduledExecutorService requestExecutorService = Executors.newSingleThreadScheduledExecutor();
         ScheduledExecutorService stopExecutorService = Executors.newSingleThreadScheduledExecutor();
 
-        ConnectionTimeReplyClientSocketRunner runner = new ConnectionTimeReplyClientSocketRunner();
-        final ScheduledFuture future = requestExecutorService.scheduleAtFixedRate(runner, 0, 10, TimeUnit.SECONDS);
-        ScheduledFuture stopFuture = stopExecutorService.schedule(() -> {
-            future.cancel(false);
-        }, 5, TimeUnit.MINUTES);
-        stopFuture.get();
+        for (int i = 0; i < 10; i++) {
+            double seriesNumber = i / SERIES.length;
+            long threads = Math.round(SERIES[i % SERIES.length] * Math.pow(10, seriesNumber));
+
+            ConnectionTimeReplyClientSocketRunner runner = new ConnectionTimeReplyClientSocketRunner(threads);
+            final ScheduledFuture future = requestExecutorService.scheduleAtFixedRate(runner, 0, 10, TimeUnit.SECONDS);
+            ScheduledFuture stopFuture = stopExecutorService.schedule(() -> {
+                future.cancel(false);
+            }, 185, TimeUnit.SECONDS);
+            stopFuture.get();
+            LOG.log(Level.INFO, new StringBuilder("Number of calls: ").append(runner.getNumberCalls()).append("\n")
+                    .append("Number of connections: ").append(runner.getNumberCalls() * threads).append("\n")
+                    .toString());
+        }
         requestExecutorService.shutdown();
         stopExecutorService.shutdown();
     }

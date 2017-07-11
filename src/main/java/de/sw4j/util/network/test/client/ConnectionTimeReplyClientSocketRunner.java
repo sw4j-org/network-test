@@ -29,6 +29,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -42,8 +44,29 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
 
     private boolean hasError = false;
 
+    private final long threads;
+
+    private int numberCalls;
+
+    public ConnectionTimeReplyClientSocketRunner(long threads) {
+        this.threads = threads;
+        LOG.log(Level.INFO, new StringBuilder("Number of threads: ").append(this.threads).append("\n").toString());
+    }
+
     @Override
     public void run() {
+        numberCalls++;
+
+        ExecutorService threadPool = Executors.newCachedThreadPool();
+
+        for (long i = 0; i < this.threads; i++) {
+            threadPool.execute(() -> {
+                communicate();
+            });
+        }
+    }
+
+    private void communicate() {
         DateTimeFormatter dtf = DateTimeFormatter.ISO_INSTANT;
         Instant start = Instant.now();
 
@@ -132,7 +155,7 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
         responseSb.append("Server Receive: ").append(serverReceive.toString()).append("\n");
         Duration responseTime = Duration.between(start, received);
         responseSb.append("Response Time: ").append(responseTime.toString()).append("\n");
-        LOG.info(responseSb.toString());
+        LOG.log(Level.FINE, responseSb.toString());
 
         try {
             socket.close();
@@ -144,6 +167,10 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
 
     public boolean hasError() {
         return hasError;
+    }
+
+    public int getNumberCalls() {
+        return numberCalls;
     }
 
 }
