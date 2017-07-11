@@ -18,6 +18,7 @@ package de.sw4j.util.network.test.client;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -27,12 +28,17 @@ import java.util.concurrent.TimeUnit;
 public class ConnectionTimeReplyClient {
 
     public static void main(String... args) throws Exception {
-        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+        ScheduledExecutorService requestExecutorService = Executors.newSingleThreadScheduledExecutor();
+        ScheduledExecutorService stopExecutorService = Executors.newSingleThreadScheduledExecutor();
+
         ConnectionTimeReplyClientSocketRunner runner = new ConnectionTimeReplyClientSocketRunner();
-        executorService.scheduleAtFixedRate(runner, 0, 10, TimeUnit.SECONDS);
-        while (!runner.hasError()) {
-        }
-        executorService.shutdown();
+        final ScheduledFuture future = requestExecutorService.scheduleAtFixedRate(runner, 0, 10, TimeUnit.SECONDS);
+        ScheduledFuture stopFuture = stopExecutorService.schedule(() -> {
+            future.cancel(false);
+        }, 5, TimeUnit.MINUTES);
+        stopFuture.get();
+        requestExecutorService.shutdown();
+        stopExecutorService.shutdown();
     }
 
 }
