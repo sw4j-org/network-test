@@ -36,21 +36,32 @@ public class ConnectionTimeReplyClient {
     public static void main(String... args) throws Exception {
         ScheduledExecutorService requestExecutorService = Executors.newSingleThreadScheduledExecutor();
         ScheduledExecutorService stopExecutorService = Executors.newSingleThreadScheduledExecutor();
+        int startThreads = 10;
+        int endThreads = 1000;
 
-        for (int i = 0; i < 10; i++) {
+        boolean run = true;
+        int i = 0;
+        while (run) {
             double seriesNumber = i / SERIES.length;
             long threads = Math.round(SERIES[i % SERIES.length] * Math.pow(10, seriesNumber));
-
-            ConnectionTimeReplyClientSocketRunner runner = new ConnectionTimeReplyClientSocketRunner(threads);
-            final ScheduledFuture future = requestExecutorService.scheduleAtFixedRate(runner, 0, 10, TimeUnit.SECONDS);
-            ScheduledFuture stopFuture = stopExecutorService.schedule(() -> {
-                future.cancel(false);
-            }, 185, TimeUnit.SECONDS);
-            stopFuture.get();
-            LOG.log(Level.INFO, new StringBuilder("Number of calls: ").append(runner.getNumberCalls()).append("\n")
-                    .append("Number of connections: ").append(runner.getNumberCalls() * threads).append("\n")
-                    .toString());
+            i++;
+            if (threads >= startThreads) {
+                if (threads <= endThreads) {
+                    ConnectionTimeReplyClientSocketRunner runner = new ConnectionTimeReplyClientSocketRunner(threads);
+                    final ScheduledFuture future = requestExecutorService.scheduleAtFixedRate(runner, 0, 10, TimeUnit.SECONDS);
+                    ScheduledFuture stopFuture = stopExecutorService.schedule(() -> {
+                        future.cancel(false);
+                    }, 3, TimeUnit.MINUTES);
+                    stopFuture.get();
+                    LOG.log(Level.INFO, new StringBuilder("Number of calls: ").append(runner.getNumberCalls()).append("\n")
+                            .append("Number of connections: ").append(runner.getNumberCalls() * threads).append("\n")
+                            .toString());
+                } else {
+                    run = false;
+                }
+            }
         }
+
         requestExecutorService.shutdown();
         stopExecutorService.shutdown();
     }

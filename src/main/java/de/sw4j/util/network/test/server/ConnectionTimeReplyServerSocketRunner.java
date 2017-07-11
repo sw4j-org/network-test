@@ -50,6 +50,12 @@ public class ConnectionTimeReplyServerSocketRunner implements Runnable {
     @Override
     public void run() {
         DateTimeFormatter dtf = DateTimeFormatter.ISO_INSTANT;
+        Instant now = Instant.now();
+        try {
+            LOG.log(Level.INFO, new StringBuilder("Received Request at ").append(dtf.format(now)).toString());
+        } catch (DateTimeException dtex) {
+            LOG.log(Level.WARNING, "Error while formating time.", dtex);
+        }
 
         char[] request = new char[1024];
         StringBuilder reply = new StringBuilder();
@@ -91,7 +97,6 @@ public class ConnectionTimeReplyServerSocketRunner implements Runnable {
             LOG.log(Level.WARNING, "Error while parsing the request.", dtpex);
             return;
         }
-        Instant now = Instant.now();
         reply.append("\n");
         try {
             reply.append(dtf.format(now));
@@ -104,7 +109,7 @@ public class ConnectionTimeReplyServerSocketRunner implements Runnable {
         Duration duration = Duration.between(sent, now);
         log.append(duration.toString());
         log.append("\n");
-        LOG.info(log.toString());
+        LOG.log(Level.FINE, log.toString());
         try {
             responseWriter.write(reply.toString());
             responseWriter.flush();
