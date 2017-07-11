@@ -57,7 +57,7 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
     public void run() {
         numberCalls++;
 
-        ExecutorService threadPool = Executors.newCachedThreadPool();
+        ExecutorService threadPool = Executors.newWorkStealingPool();
 
         for (long i = 0; i < this.threads; i++) {
             threadPool.execute(() -> {
