@@ -17,36 +17,28 @@
 package de.sw4j.util.network.test.server;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
+import java.util.logging.Logger;
 
 /**
  *
  * @author Uwe Plonus &lt;u.plonus@gmail.com&gt;
  */
-public class SocketServerRunnable extends ServerRunnable {
+public class ReplyServer {
 
-    private final Socket socket;
+    private static final Logger LOG = Logger.getLogger(ReplyServer.class.getName());
 
-    public SocketServerRunnable(RequestHandler requestHandler, Socket socket) {
-        super(requestHandler);
-        this.socket = socket;
+    public static void main(String... args) throws Exception {
+        ReplyServer server = new ReplyServer();
+        server.start();
     }
 
-    @Override
-    public InputStream getInputStream() throws IOException {
-        return this.socket.getInputStream();
-    }
-
-    @Override
-    public OutputStream getOutputStream() throws IOException {
-        return this.socket.getOutputStream();
-    }
-
-    @Override
-    public void closeConnection() throws IOException {
-        this.socket.close();
+    public void start() throws IOException {
+        Server server = new ConnectionTimeReplySocketServer(9099);
+        while (true) {
+            ServerRunnable runnable = server.accept();
+            Thread t = new Thread(runnable);
+            t.start();
+        }
     }
 
 }

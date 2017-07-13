@@ -24,10 +24,8 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.time.DateTimeException;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,23 +33,25 @@ import java.util.logging.Logger;
  *
  * @author Uwe Plonus
  */
-public abstract class ConnectionTimeReplyServerRunnable implements Runnable {
+public abstract class ServerRunnable implements Runnable {
 
-    private static final Logger LOG = Logger.getLogger(ConnectionTimeReplyServerRunnable.class.getName());
+    private static final Logger LOG = Logger.getLogger(ServerRunnable.class.getName());
+
+    private final RequestHandler requestHandler;
+
+    public ServerRunnable(RequestHandler requestHandler) {
+        this.requestHandler = requestHandler;
+    }
 
     @Override
     public final void run() {
         DateTimeFormatter dtf = DateTimeFormatter.ISO_INSTANT;
-        Instant now = Instant.now();
+        Instant received = Instant.now();
         try {
-            LOG.log(Level.INFO, new StringBuilder("Received Request at ").append(dtf.format(now)).toString());
+            LOG.log(Level.INFO, new StringBuilder("Received Request at ").append(dtf.format(received)).toString());
         } catch (DateTimeException dtex) {
             LOG.log(Level.WARNING, "Error while formating time.", dtex);
         }
-
-        char[] request = new char[1024];
-        StringBuilder reply = new StringBuilder();
-        StringBuilder log = new StringBuilder();
 
         Writer responseWriter;
         Reader requestReader;
@@ -67,45 +67,35 @@ public abstract class ConnectionTimeReplyServerRunnable implements Runnable {
             }
             return;
         }
+        LOG.log(Level.FINEST, "Opened reader/writer.");
+
+        char[] requestBuffer = new char[1024];
+        StringBuilder reply = new StringBuilder();
 
         try {
-            boolean lineRead = false;
-            while (!lineRead) {
-                int byteRead = requestReader.read(request);
-                reply.append(request, 0, byteRead);
-                int newLinePos = reply.indexOf("\n");
+            boolean requestRead = false;
+            while (!requestRead) {
+                int byteRead = requestReader.read(requestBuffer);
+                if (byteRead > 0) {
+                    reply.append(requestBuffer, 0, byteRead);
+                }
+                int newLinePos = reply.indexOf("\n\n.\n");
                 if (newLinePos >= 0) {
                     reply.delete(newLinePos, reply.length());
-                    lineRead = true;
+                    requestRead = true;
                 }
             }
         } catch (IOException ioex) {
             LOG.log(Level.WARNING, "Error while receiving request.", ioex);
             return;
         }
-
-        Instant sent;
-        try {
-            sent = Instant.from(dtf.parse(reply));
-        } catch (DateTimeParseException dtpex) {
-            LOG.log(Level.WARNING, "Error while parsing the request.", dtpex);
-            return;
-        }
-        reply.append("\n");
+        LOG.log(Level.FINEST, "Read request.");
 
         try {
-            reply.append(dtf.format(now));
-        } catch (DateTimeException dtex) {
-            LOG.log(Level.WARNING, "Error while formating the response.", dtex);
-            return;
+            reply = requestHandler.handleRequest(reply, received);
+        } catch (RequestHandlerException rhex) {
+            LOG.log(Level.WARNING, rhex.getMessage(), rhex);
         }
-        reply.append("\n");
-
-        log.append(reply);
-        Duration duration = Duration.between(sent, now);
-        log.append(duration.toString());
-        log.append("\n");
-        LOG.log(Level.FINE, log.toString());
 
         try {
             responseWriter.write(reply.toString());
@@ -120,6 +110,7 @@ public abstract class ConnectionTimeReplyServerRunnable implements Runnable {
             LOG.log(Level.INFO, "Ignoring exception during socket close.", ioex);
             return;
         }
+        LOG.log(Level.FINEST, "Closed connection");
     }
 
     public abstract InputStream getInputStream() throws IOException;

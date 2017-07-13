@@ -16,37 +16,16 @@
  */
 package de.sw4j.util.network.test.server;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
+import java.time.Instant;
 
 /**
  *
  * @author Uwe Plonus &lt;u.plonus@gmail.com&gt;
  */
-public class SocketServerRunnable extends ServerRunnable {
+public interface RequestHandler {
 
-    private final Socket socket;
+    StringBuilder handleRequest(StringBuilder sb) throws RequestHandlerException;
 
-    public SocketServerRunnable(RequestHandler requestHandler, Socket socket) {
-        super(requestHandler);
-        this.socket = socket;
-    }
-
-    @Override
-    public InputStream getInputStream() throws IOException {
-        return this.socket.getInputStream();
-    }
-
-    @Override
-    public OutputStream getOutputStream() throws IOException {
-        return this.socket.getOutputStream();
-    }
-
-    @Override
-    public void closeConnection() throws IOException {
-        this.socket.close();
-    }
+    StringBuilder handleRequest(StringBuilder sb, Instant received) throws RequestHandlerException;
 
 }

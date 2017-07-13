@@ -19,50 +19,28 @@ package de.sw4j.util.network.test.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  *
  * @author Uwe Plonus &lt;uplonus@gmail.com&gt;
  */
-public class ConnectionTimeReplySocketServer {
+public class ConnectionTimeReplySocketServer implements Server {
 
     private final ServerSocket serverSocket;
 
-    private final ThreadMode threadMode;
-
     public ConnectionTimeReplySocketServer(int port) throws IOException {
         this.serverSocket = new ServerSocket(port);
-        this.threadMode = ThreadMode.CACHE_POOL;
     }
 
-    public void run() throws IOException {
-        ExecutorService threadPool;
-        switch (threadMode) {
-            default:
-                threadPool = Executors.newCachedThreadPool();
-        }
-        while (true) {
-            this.serverSocket.accept();
-        }
-    }
-
-    public ConnectionTimeReplyServerRunnable accept() throws IOException {
+    @Override
+    public ServerRunnable accept() throws IOException {
         Socket socket = this.serverSocket.accept();
-        return new SocketServerRunnable(socket);
+        return new SocketServerRunnable(new ConnectionTimeReplyRequestHandler(), socket);
     }
 
+    @Override
     public void shutdown() throws IOException {
         this.serverSocket.close();
-    }
-
-
-    public static enum ThreadMode {
-
-        CACHE_POOL,
-        ;
-
     }
 
 }

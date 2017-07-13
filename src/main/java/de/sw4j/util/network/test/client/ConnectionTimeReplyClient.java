@@ -36,7 +36,7 @@ public class ConnectionTimeReplyClient {
     public static void main(String... args) throws Exception {
         ScheduledExecutorService requestExecutorService = Executors.newSingleThreadScheduledExecutor();
         ScheduledExecutorService stopExecutorService = Executors.newSingleThreadScheduledExecutor();
-        int startThreads = 10;
+        int startThreads = 100;
         int endThreads = 1000;
 
         boolean run = true;

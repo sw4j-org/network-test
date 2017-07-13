@@ -55,8 +55,6 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
 
     @Override
     public void run() {
-        numberCalls++;
-
         ExecutorService threadPool = Executors.newWorkStealingPool();
 
         for (long i = 0; i < this.threads; i++) {
@@ -64,6 +62,8 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
                 communicate();
             });
         }
+
+        numberCalls++;
     }
 
     private void communicate() {
@@ -107,7 +107,7 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
             LOG.log(Level.WARNING, "Error while formating the request.", dtex);
             return;
         }
-        requestSb.append("\n");
+        requestSb.append("\n\n.\n");
         try {
             requestWriter.append(requestSb);
             requestWriter.flush();

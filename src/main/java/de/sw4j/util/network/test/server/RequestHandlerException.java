@@ -16,26 +16,25 @@
  */
 package de.sw4j.util.network.test.server;
 
-import java.io.IOException;
-
 /**
  *
  * @author Uwe Plonus &lt;u.plonus@gmail.com&gt;
  */
-public class ConnectionTimeReplyServer {
+public class RequestHandlerException extends Exception {
 
-    public static void main(String... args) throws Exception {
-        ConnectionTimeReplyServer server = new ConnectionTimeReplyServer();
-        server.start();
+    public RequestHandlerException() {
     }
 
-    public void start() throws IOException {
-        ConnectionTimeReplySocketServer server = new ConnectionTimeReplySocketServer(9099);
-        while (true) {
-            ConnectionTimeReplyServerRunnable runnable = server.accept();
-            Thread t = new Thread(runnable);
-            t.start();
-        }
+    public RequestHandlerException(String message) {
+        super(message);
+    }
+
+    public RequestHandlerException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public RequestHandlerException(Throwable cause) {
+        super(cause);
     }
 
 }
