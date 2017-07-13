@@ -17,25 +17,35 @@
 package de.sw4j.util.network.test.server;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
 
 /**
  *
  * @author Uwe Plonus &lt;u.plonus@gmail.com&gt;
  */
-public class ConnectionTimeReplyServer {
+public class SocketServerRunnable extends ConnectionTimeReplyServerRunnable {
 
-    public static void main(String... args) throws Exception {
-        ConnectionTimeReplyServer server = new ConnectionTimeReplyServer();
-        server.start();
+    private final Socket socket;
+
+    public SocketServerRunnable(Socket socket) {
+        this.socket = socket;
     }
 
-    public void start() throws IOException {
-        ConnectionTimeReplySocketServer server = new ConnectionTimeReplySocketServer(9099);
-        while (true) {
-            ConnectionTimeReplyServerRunnable runnable = server.accept();
-            Thread t = new Thread(runnable);
-            t.start();
-        }
+    @Override
+    public InputStream getInputStream() throws IOException {
+        return this.socket.getInputStream();
+    }
+
+    @Override
+    public OutputStream getOutputStream() throws IOException {
+        return this.socket.getOutputStream();
+    }
+
+    @Override
+    public void closeConnection() throws IOException {
+        this.socket.close();
     }
 
 }
