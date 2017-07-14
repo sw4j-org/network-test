@@ -18,6 +18,8 @@ package de.sw4j.util.network.test.server;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.XMLConstants;
@@ -56,11 +58,9 @@ public class ReplyServer {
             try {
                 SchemaFactory schemaFactory = SchemaFactory.newInstance(
                         XMLConstants.W3C_XML_SCHEMA_NS_URI);
-                Schema configSchema = schemaFactory.newSchema(
-                        getClass().getClassLoader().getResource(
-                                "de/sw4j/util/network/test/server/config.xsd"));
-                JAXBContext jaxbContext
-                        = JAXBContext.newInstance("de.sw4j.util.network.test.server");
+                Schema configSchema = schemaFactory.newSchema(getClass().getClassLoader().getResource(
+                        "de/sw4j/util/network/test/server/config.xsd"));
+                JAXBContext jaxbContext = JAXBContext.newInstance("de.sw4j.util.network.test.server");
                 Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
                 unmarshaller.setSchema(configSchema);
                 JAXBElement<ServerConfigType> conf = unmarshaller.unmarshal(
@@ -68,13 +68,11 @@ public class ReplyServer {
                 serverConfig = conf.getValue();
             } catch (SAXException | JAXBException ex) {
                 LOG.log(Level.WARNING, new StringBuilder("Configuration file ")
-                        .append(configurationFile.getAbsolutePath())
-                        .append(" cannot be parsed.").toString(), ex);
+                        .append(configurationFile.getAbsolutePath()).append(" cannot be parsed.").toString(), ex);
                 System.exit(-1);
             }
         } else {
-            LOG.log(Level.WARNING, new StringBuilder("Configuration file ")
-                    .append(configurationFile.getAbsolutePath())
+            LOG.log(Level.WARNING, new StringBuilder("Configuration file ").append(configurationFile.getAbsolutePath())
                     .append(" does not exist.").toString());
             System.exit(-2);
         }
@@ -84,11 +82,12 @@ public class ReplyServer {
         if (serverConfig == null) {
             throw new IllegalStateException("Server not configured.");
         }
+
         Server server = new ConnectionTimeReplySocketServer(serverConfig.getTcpPort());
+        ExecutorService threadPool = Executors.newCachedThreadPool();
         while (true) {
             ServerRunnable runnable = server.accept();
-            Thread t = new Thread(runnable);
-            t.start();
+            threadPool.submit(runnable);
         }
     }
 
