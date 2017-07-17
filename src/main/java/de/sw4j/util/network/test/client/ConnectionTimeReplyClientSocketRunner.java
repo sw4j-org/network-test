@@ -44,12 +44,15 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
 
     private boolean hasError = false;
 
+    private final int serverPort;
+
     private final long threads;
 
     private int numberCalls;
 
-    public ConnectionTimeReplyClientSocketRunner(long threads) {
+    public ConnectionTimeReplyClientSocketRunner(long threads, int serverPort) {
         this.threads = threads;
+        this.serverPort = serverPort;
         LOG.log(Level.INFO, new StringBuilder("Number of threads: ").append(this.threads).append("\n").toString());
     }
 
@@ -72,7 +75,7 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
 
         Socket socket;
         try {
-            socket = new Socket(InetAddress.getLocalHost(), 9099);
+            socket = new Socket(InetAddress.getLocalHost(), this.serverPort);
         } catch (IOException ioex) {
             LOG.log(Level.WARNING, "Error while creating socket.", ioex);
             hasError = true;

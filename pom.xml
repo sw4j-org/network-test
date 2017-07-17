@@ -88,6 +88,7 @@
               <goal>generate</goal>
             </goals>
             <configuration>
+              <forceRegenerate>true</forceRegenerate>
               <schemaDirectory>${project.basedir}/src/main/resources/de/sw4j/util/network/test/server</schemaDirectory>
               <schemaIncludes>
                 <include>config.xsd</include>
@@ -95,7 +96,26 @@
               <generatePackage>de.sw4j.util.network.test.server</generatePackage>
               <generateDirectory>${project.build.directory}/generated-sources/jaxb</generateDirectory>
               <extension>true</extension>
-              <episode>false</episode>
+              <episode>true</episode>
+              <episodeFile>${project.build.directory}/generated-sources/jaxb/META-INF/server-jaxb.episode</episodeFile>
+            </configuration>
+          </execution>
+          <execution>
+            <id>Client Configuration Schema</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <forceRegenerate>true</forceRegenerate>
+              <schemaDirectory>${project.basedir}/src/main/resources/de/sw4j/util/network/test/client</schemaDirectory>
+              <schemaIncludes>
+                <include>config.xsd</include>
+              </schemaIncludes>
+              <generatePackage>de.sw4j.util.network.test.client</generatePackage>
+              <generateDirectory>${project.build.directory}/generated-sources/jaxb</generateDirectory>
+              <extension>true</extension>
+              <episode>true</episode>
+              <episodeFile>${project.build.directory}/generated-sources/jaxb/META-INF/client-jaxb.episode</episodeFile>
             </configuration>
           </execution>
         </executions>
