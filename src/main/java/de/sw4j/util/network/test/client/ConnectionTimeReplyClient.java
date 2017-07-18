@@ -16,10 +16,13 @@
  */
 package de.sw4j.util.network.test.client;
 
-import de.sw4j.util.network.test.server.ServerConfigType;
 import java.io.File;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.Collections;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -45,6 +48,8 @@ public class ConnectionTimeReplyClient {
     private static final Logger LOG = Logger.getLogger(ConnectionTimeReplyClientSocketRunner.class.getName());
 
     private static final String DEFAULT_CONFIGURATION_FILE_NAME = "config/client-config.xml";
+
+    private static final String DEFAULT_RESULT_FILE_NAME = "result.csv";
 
     private static final double[] SERIES = {1.0, 1.6, 2.5, 4.0, 6.3};
 
@@ -84,11 +89,12 @@ public class ConnectionTimeReplyClient {
         }
     }
 
-    public void run() throws CancellationException, ExecutionException, InterruptedException {
+    public void run() throws CancellationException, ExecutionException, InterruptedException, IOException {
         if (clientConfig == null) {
             throw new IllegalStateException("Client not configured.");
         }
 
+        ExecutorService resultExecutor = Executors.newSingleThreadExecutor();
         ScheduledExecutorService requestExecutorService = Executors.newSingleThreadScheduledExecutor();
         ScheduledExecutorService stopExecutorService = Executors.newSingleThreadScheduledExecutor();
         int startThreads = 100;
@@ -96,6 +102,12 @@ public class ConnectionTimeReplyClient {
 
         boolean run = true;
         int i = 0;
+        File resultFile = new File(DEFAULT_RESULT_FILE_NAME);
+        if (resultFile.exists()) {
+            resultFile.delete();
+        }
+        ClientResultOutputRunner resultRunner = new ClientResultOutputRunner(resultFile);
+        resultExecutor.submit(resultRunner);
         while (run) {
             double seriesNumber = i / SERIES.length;
             long threads = Math.round(SERIES[i % SERIES.length] * Math.pow(10, seriesNumber));
@@ -103,7 +115,7 @@ public class ConnectionTimeReplyClient {
             if (threads >= startThreads) {
                 if (threads <= endThreads) {
                     ConnectionTimeReplyClientSocketRunner runner = new ConnectionTimeReplyClientSocketRunner(
-                            threads, clientConfig.getTcpServerPort());
+                            threads, clientConfig.getTcpServerPort(), resultRunner);
                     final ScheduledFuture future = requestExecutorService.scheduleAtFixedRate(
                             runner, 0, 10, TimeUnit.SECONDS);
                     ScheduledFuture stopFuture = stopExecutorService.schedule(() -> {
@@ -118,9 +130,11 @@ public class ConnectionTimeReplyClient {
                 }
             }
         }
+        resultRunner.queueResult(new ClientResult(null, null, null, null, null));
 
         requestExecutorService.shutdown();
         stopExecutorService.shutdown();
+        resultExecutor.shutdown();
     }
 
 }

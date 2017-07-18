@@ -50,10 +50,13 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
 
     private int numberCalls;
 
-    public ConnectionTimeReplyClientSocketRunner(long threads, int serverPort) {
+    private final ResultCollector collector;
+
+    public ConnectionTimeReplyClientSocketRunner(long threads, int serverPort, ResultCollector collector) {
         this.threads = threads;
         this.serverPort = serverPort;
         LOG.log(Level.INFO, new StringBuilder("Number of threads: ").append(this.threads).append("\n").toString());
+        this.collector = collector;
     }
 
     @Override
@@ -120,9 +123,13 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
             return;
         }
 
+        Instant firstResponse = null;
         try {
             int byteRead = 0;
             while ((byteRead = responseReader.read(response)) >= 0) {
+                if (firstResponse == null) {
+                    firstResponse = Instant.now();
+                }
                 responseSb.append(response, 0, byteRead);
             }
         } catch (IOException ioex) {
@@ -165,6 +172,12 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
         } catch (IOException ioex) {
             LOG.log(Level.INFO, "Ignoring exception during socket close.", ioex);
             return;
+        }
+
+        try {
+            collector.queueResult(new ClientResult(start, connected, serverTime, firstResponse, received));
+        } catch (InterruptedException iex) {
+            LOG.log(Level.INFO, "Interrupted while publishing result.", iex);
         }
     }
 
