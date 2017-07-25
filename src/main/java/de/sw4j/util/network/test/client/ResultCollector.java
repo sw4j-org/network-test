@@ -16,6 +16,8 @@
  */
 package de.sw4j.util.network.test.client;
 
+import de.sw4j.util.network.test.report.ClientResult;
+
 /**
  *
  * @author Uwe Plonus &lt;u.plonus@gmail.com&gt;

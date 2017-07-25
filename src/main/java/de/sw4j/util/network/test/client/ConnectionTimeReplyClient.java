@@ -16,10 +16,9 @@
  */
 package de.sw4j.util.network.test.client;
 
+import de.sw4j.util.network.test.report.ClientResult;
 import java.io.File;
 import java.io.IOException;
-import java.time.Instant;
-import java.util.Collections;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -34,6 +33,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -49,7 +49,7 @@ public class ConnectionTimeReplyClient {
 
     private static final String DEFAULT_CONFIGURATION_FILE_NAME = "config/client-config.xml";
 
-    private static final String DEFAULT_RESULT_FILE_NAME = "result.csv";
+    private static final String DEFAULT_RESULT_FILE_NAME = "result.xml";
 
     private static final double[] SERIES = {1.0, 1.6, 2.5, 4.0, 6.3};
 
@@ -89,7 +89,8 @@ public class ConnectionTimeReplyClient {
         }
     }
 
-    public void run() throws CancellationException, ExecutionException, InterruptedException, IOException {
+    public void run() throws CancellationException, ExecutionException, InterruptedException, IOException,
+            XMLStreamException {
         if (clientConfig == null) {
             throw new IllegalStateException("Client not configured.");
         }
@@ -130,7 +131,7 @@ public class ConnectionTimeReplyClient {
                 }
             }
         }
-        resultRunner.queueResult(new ClientResult(null, null, null, null, null));
+        resultRunner.queueResult(new ClientResult.Builder().build());
 
         requestExecutorService.shutdown();
         stopExecutorService.shutdown();

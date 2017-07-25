@@ -16,6 +16,7 @@
  */
 package de.sw4j.util.network.test.client;
 
+import de.sw4j.util.network.test.report.ClientResult;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -175,7 +176,12 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
         }
 
         try {
-            collector.queueResult(new ClientResult(start, connected, serverTime, firstResponse, received));
+            collector.queueResult(new ClientResult.Builder()
+                    .setStart(start)
+                    .setConnected(connected)
+                    .setServerReceived(serverTime)
+                    .setFirstResponse(firstResponse)
+                    .setCompleted(received).build());
         } catch (InterruptedException iex) {
             LOG.log(Level.INFO, "Interrupted while publishing result.", iex);
         }

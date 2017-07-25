@@ -16,6 +16,7 @@
  */
 package de.sw4j.util.network.test.client;
 
+import de.sw4j.util.network.test.report.ClientResult;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -27,6 +28,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 
 /**
  *
@@ -36,31 +40,34 @@ public class ClientResultOutputRunner implements Runnable, ResultCollector {
 
     private static final Logger LOG = Logger.getLogger(ClientResultOutputRunner.class.getName());
 
-    private final Writer targetWriter;
+    private final XMLStreamWriter targetWriter;
 
     private final BlockingQueue<ClientResult> workingQueue;
 
-    public ClientResultOutputRunner(String outputFileName) throws IOException {
+    public ClientResultOutputRunner(String outputFileName) throws IOException, XMLStreamException {
         this(new BufferedWriter(new OutputStreamWriter(
                 new FileOutputStream(outputFileName, true), "UTF-8")));
     }
 
-    public ClientResultOutputRunner(File outputFile) throws IOException {
+    public ClientResultOutputRunner(File outputFile) throws IOException, XMLStreamException {
         this(new BufferedWriter(new OutputStreamWriter(
                 new FileOutputStream(outputFile, true), "UTF-8")));
     }
 
-    private ClientResultOutputRunner(Writer targetWriter) throws IOException {
-        this.targetWriter = targetWriter;
+    private ClientResultOutputRunner(Writer targetWriter) throws IOException, XMLStreamException {
+        this.targetWriter = XMLOutputFactory.newFactory().createXMLStreamWriter(targetWriter);
         this.workingQueue = new LinkedBlockingQueue<>();
-        this.targetWriter.write("start;connected;server received;first response;completed\n");
+        this.targetWriter.writeStartDocument();
+        this.targetWriter.writeCharacters("\n");
+        this.targetWriter.writeStartElement("results");
+        this.targetWriter.writeCharacters("\n");
     }
 
     @Override
     public void queueResult(ClientResult result) throws InterruptedException {
-        LOG.log(Level.FINER, "Retrieved result.");
+        LOG.log(Level.FINEST, "Retrieved result.");
         this.workingQueue.put(result);
-        LOG.log(Level.FINER, "Queued result.");
+        LOG.log(Level.FINEST, "Queued result.");
     }
 
     @Override
@@ -70,39 +77,36 @@ public class ClientResultOutputRunner implements Runnable, ResultCollector {
         while (hasMore) {
             ClientResult result = null;
             try {
-                LOG.log(Level.FINER, "Waiting for result.");
+                LOG.log(Level.FINEST, "Waiting for result.");
                 result = this.workingQueue.take();
             } catch (InterruptedException iex) {
                 LOG.log(Level.INFO, "Taking from queue interrupted.", iex);
             }
-            LOG.log(Level.FINER, "Received result.");
+            LOG.log(Level.FINEST, "Received result.");
             if (result == null || result.getStart() == null) {
-                LOG.log(Level.FINER, "Processing ends.");
+                LOG.log(Level.FINEST, "Processing ends.");
                 hasMore = false;
             } else {
-                LOG.log(Level.FINER, "Processing result.");
-                StringBuilder sb = new StringBuilder();
-                sb.append(dtf.format(result.getStart()));
-                sb.append(";");
-                sb.append(dtf.format(result.getConnected()));
-                sb.append(";");
-                sb.append(dtf.format(result.getServerReceived()));
-                sb.append(";");
-                sb.append(dtf.format(result.getFirstResponse()));
-                sb.append(";");
-                sb.append(dtf.format(result.getCompleted()));
-                sb.append("\n");
+                LOG.log(Level.FINEST, "Processing result.");
                 try {
-                    this.targetWriter.write(sb.toString());
-                } catch (IOException ioex) {
-                    LOG.log(Level.WARNING, "Problems writing result data set.", ioex);
-                }
-                try {
-                    this.targetWriter.flush();
-                } catch (IOException ioex) {
-                    LOG.log(Level.WARNING, "Problems flushing result.", ioex);
+                    this.targetWriter.writeEmptyElement("result");
+                    this.targetWriter.writeAttribute("start", dtf.format(result.getStart()));
+                    this.targetWriter.writeAttribute("connected", dtf.format(result.getConnected()));
+                    this.targetWriter.writeAttribute("serverReceived", dtf.format(result.getServerReceived()));
+                    this.targetWriter.writeAttribute("firstResponse", dtf.format(result.getFirstResponse()));
+                    this.targetWriter.writeAttribute("completed", dtf.format(result.getCompleted()));
+                    this.targetWriter.writeCharacters("\n");
+                } catch (XMLStreamException xsex) {
+                    LOG.log(Level.WARNING, "Problems writing result data set.", xsex);
                 }
             }
+        }
+        try {
+            this.targetWriter.writeEndDocument();
+            this.targetWriter.flush();
+            this.targetWriter.close();
+        } catch (XMLStreamException xsex) {
+            LOG.log(Level.WARNING, "Problems ending XML document.", xsex);
         }
     }
 
