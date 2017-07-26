@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>de.sw4j.util</groupId>
+    <artifactId>network-test</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>de.sw4j.util.network-test</groupId>
+  <artifactId>reporting</artifactId>
+  <packaging>jar</packaging>
+
+  <name>Network Test Utilities - Reporting</name>
+
+  <description>This are the reporting utilities for the utilities to test networks with java programs.</description>
+
+  <url>https://uweplonus.github.io/network-test/reporting/</url>
+
+  <dependencies>
+    <dependency>
+      <groupId>de.sw4j.util.network-test</groupId>
+      <artifactId>common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-cli</groupId>
+      <artifactId>commons-cli</artifactId>
+    </dependency>
+  </dependencies>
+
+  <scm>
+    <developerConnection>scm:git:ssh://git@github.com:uweplonus/network-test.git</developerConnection>
+    <url>https://github.com/uweplonus/network-test</url>
+  </scm>
+
+  <distributionManagement>
+    <site>
+      <id>github</id>
+      <url>scm:git:https://github.com/uweplonus/network-test.git</url>
+    </site>
+  </distributionManagement>
+
+</project>
