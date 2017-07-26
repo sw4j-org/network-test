@@ -37,6 +37,13 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.xml.sax.SAXException;
 
 /**
@@ -57,12 +64,17 @@ public class ConnectionTimeReplyClient {
 
     public static void main(String... args) throws Exception {
         ConnectionTimeReplyClient client = new ConnectionTimeReplyClient();
-        client.configure();
+        client.configure(args);
         client.run();
     }
 
-    public void configure() {
-        String configurationFileName = DEFAULT_CONFIGURATION_FILE_NAME;
+    public void configure(String... args) {
+        CommandLine cl = parseCommandLine(args);
+
+        String configurationFileName = cl.getOptionValue("conf");
+        if (configurationFileName == null) {
+            configurationFileName = DEFAULT_CONFIGURATION_FILE_NAME;
+        }
         File configurationFile = new File(configurationFileName);
 
         if (configurationFile.exists()) {
@@ -87,6 +99,26 @@ public class ConnectionTimeReplyClient {
                     .append(" does not exist.").toString());
             System.exit(-2);
         }
+    }
+
+    private CommandLine parseCommandLine(String... args) {
+        Options options = new Options();
+        options.addOption(Option
+                .builder("c")
+                .longOpt("conf")
+                .argName("file")
+                .hasArg()
+                .desc("The configuration file to be read.")
+                .build());
+
+        CommandLineParser clParser = new DefaultParser();
+        CommandLine cl = new CommandLine.Builder().build();
+        try {
+            cl = clParser.parse(options, args);
+        } catch (ParseException pex) {
+            LOG.log(Level.INFO, "Cannot read configuration file, using default values.", pex);
+        }
+        return cl;
     }
 
     public void run() throws CancellationException, ExecutionException, InterruptedException, IOException,

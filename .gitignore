@@ -12,3 +12,5 @@ buildNumber.properties
 !/.mvn/wrapper/maven-wrapper.jar
 /nbactions.xml
 /result.xml
+/config/dev-client-config.xml
+/config/dev-server-config.xml
