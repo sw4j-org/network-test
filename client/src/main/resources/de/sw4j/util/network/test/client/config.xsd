@@ -41,7 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           <xs:documentation>The maximum number of threads used at the end of the tests.</xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="resultFile" type="xs:string" minOccurs="0" default="result-{0,date,yyyyMMdd}-{0,time,HHmms}.xml"/>
+      <xs:element name="resultFile" type="xs:string" minOccurs="0" default="result-{0,date,yyyyMMdd}-{0,time,HHmmss}.xml"/>
     </xs:sequence>
   </xs:complexType>
 

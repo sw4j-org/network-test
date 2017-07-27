@@ -103,7 +103,7 @@ public class ConnectionTimeReplyClient {
                     this.clientConfig.setIncreaseAfterMin(5);
                 }
                 if (this.clientConfig.getResultFile() == null) {
-                    this.clientConfig.setResultFile("result-{0,date,yyyyMMdd}-{0,time,HHmms}.xml");
+                    this.clientConfig.setResultFile("result-{0,date,yyyyMMdd}-{0,time,HHmmss}.xml");
                 }
             } catch (SAXException | JAXBException ex) {
                 LOG.log(Level.WARNING, new StringBuilder("Configuration file ")
