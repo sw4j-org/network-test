@@ -19,6 +19,8 @@ package de.sw4j.util.network.test.client;
 import de.sw4j.util.network.test.common.ClientResult;
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
+import java.util.Date;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -78,8 +80,7 @@ public class ConnectionTimeReplyClient {
 
         if (configurationFile.exists()) {
             try {
-                SchemaFactory schemaFactory = SchemaFactory.newInstance(
-                        XMLConstants.W3C_XML_SCHEMA_NS_URI);
+                SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
                 Schema configSchema = schemaFactory.newSchema(getClass().getClassLoader().getResource(
                         "de/sw4j/util/network/test/client/config.xsd"));
                 JAXBContext jaxbContext = JAXBContext.newInstance("de.sw4j.util.network.test.client");
@@ -87,7 +88,23 @@ public class ConnectionTimeReplyClient {
                 unmarshaller.setSchema(configSchema);
                 JAXBElement<ClientConfigType> conf = unmarshaller.unmarshal(
                         new StreamSource(configurationFile), ClientConfigType.class);
-                clientConfig = conf.getValue();
+                this.clientConfig = conf.getValue();
+
+                if (this.clientConfig.getTcpServerHost() == null) {
+                    this.clientConfig.setTcpServerHost("localhost");
+                }
+                if (this.clientConfig.getTcpServerPort() == null) {
+                    this.clientConfig.setTcpServerPort(9099);
+                }
+                if (this.clientConfig.getBurstLengthSec() == null) {
+                    this.clientConfig.setBurstLengthSec(10);
+                }
+                if (this.clientConfig.getIncreaseAfterMin() == null) {
+                    this.clientConfig.setIncreaseAfterMin(5);
+                }
+                if (this.clientConfig.getResultFile() == null) {
+                    this.clientConfig.setResultFile("result-{0,date,yyyyMMdd}-{0,time,HHmms}.xml");
+                }
             } catch (SAXException | JAXBException ex) {
                 LOG.log(Level.WARNING, new StringBuilder("Configuration file ")
                         .append(configurationFile.getAbsolutePath()).append(" cannot be parsed.").toString(), ex);
@@ -129,12 +146,12 @@ public class ConnectionTimeReplyClient {
         ExecutorService resultExecutor = Executors.newSingleThreadExecutor();
         ScheduledExecutorService requestExecutorService = Executors.newSingleThreadScheduledExecutor();
         ScheduledExecutorService stopExecutorService = Executors.newSingleThreadScheduledExecutor();
-        int startThreads = 100;
-        int endThreads = 1000;
+        int startThreads = this.clientConfig.getMinThreads();
+        int endThreads = this.clientConfig.getMaxThreads();
 
         boolean run = true;
         int i = 0;
-        File resultFile = new File(DEFAULT_RESULT_FILE_NAME);
+        File resultFile = new File(MessageFormat.format(this.clientConfig.getResultFile(), new Date()));
         if (resultFile.exists()) {
             resultFile.delete();
         }
@@ -146,13 +163,13 @@ public class ConnectionTimeReplyClient {
             i++;
             if (threads >= startThreads) {
                 if (threads <= endThreads) {
-                    ConnectionTimeReplyClientSocketRunner runner = new ConnectionTimeReplyClientSocketRunner(
-                            threads, clientConfig.getTcpServerPort(), resultRunner);
+                    ConnectionTimeReplyClientSocketRunner runner = new ConnectionTimeReplyClientSocketRunner(threads,
+                            this.clientConfig.getTcpServerHost(), clientConfig.getTcpServerPort(), resultRunner);
                     final ScheduledFuture future = requestExecutorService.scheduleAtFixedRate(
-                            runner, 0, 10, TimeUnit.SECONDS);
+                            runner, 0, this.clientConfig.getBurstLengthSec(), TimeUnit.SECONDS);
                     ScheduledFuture stopFuture = stopExecutorService.schedule(() -> {
                         future.cancel(false);
-                    }, 3, TimeUnit.MINUTES);
+                    }, this.clientConfig.getIncreaseAfterMin(), TimeUnit.MINUTES);
                     stopFuture.get();
                     LOG.log(Level.INFO, new StringBuilder("Number of calls: ").append(runner.getNumberCalls()).append("\n")
                             .append("Number of connections: ").append(runner.getNumberCalls() * threads).append("\n")
