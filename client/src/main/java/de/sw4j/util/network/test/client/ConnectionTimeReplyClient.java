@@ -57,7 +57,7 @@ public class ConnectionTimeReplyClient {
 
     private static final String DEFAULT_CONFIGURATION_FILE_NAME = "config/client-config.xml";
 
-    private static final String DEFAULT_RESULT_FILE_NAME = "result.xml";
+    private static final String DEFAULT_RESULT_FILE_NAME = "result-{0,date,yyyyMMdd}-{0,time,HHmmss}.xml";
 
     private static final double[] SERIES = {1.0, 1.6, 2.5, 4.0, 6.3};
 
@@ -103,7 +103,7 @@ public class ConnectionTimeReplyClient {
                     this.clientConfig.setIncreaseAfterMin(5);
                 }
                 if (this.clientConfig.getResultFile() == null) {
-                    this.clientConfig.setResultFile("result-{0,date,yyyyMMdd}-{0,time,HHmmss}.xml");
+                    this.clientConfig.setResultFile(DEFAULT_RESULT_FILE_NAME);
                 }
             } catch (SAXException | JAXBException ex) {
                 LOG.log(Level.WARNING, new StringBuilder("Configuration file ")
