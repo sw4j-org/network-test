@@ -28,10 +28,9 @@ import javafx.geometry.HPos;
 import javafx.geometry.VPos;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
@@ -53,6 +52,18 @@ public class ClientReportController implements Initializable {
 
     @FXML
     private Tab liveTab;
+
+    @FXML
+    private TextField liveConnect;
+
+    @FXML
+    private TextField liveServer;
+
+    @FXML
+    private TextField liveLatency;
+
+    @FXML
+    private TextField liveResponse;
 
     @FXML
     private LineChart<?, ?> connectTimeChart;
