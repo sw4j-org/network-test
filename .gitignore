@@ -15,7 +15,7 @@ buildNumber.properties
 /config/dev-client-config.xml
 /config/dev-server-config.xml
 /nb-configuration.xml
-/client/result.xml
+/client/result*.xml
 /client/config/dev-client-config.xml
 /server/config/dev-server-config.xml
 /server/nbactions.xml
