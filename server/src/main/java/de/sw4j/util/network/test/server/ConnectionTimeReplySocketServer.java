@@ -39,7 +39,7 @@ public class ConnectionTimeReplySocketServer implements Server {
     @Override
     public ServerRunnable accept() throws IOException {
         Socket socket = this.serverSocket.accept();
-        LOG.log(Level.INFO, "Accepted connection.");
+        LOG.log(Level.FINER, "Accepted connection.");
         return new SocketServerRunnable(new ConnectionTimeReplyRequestHandler(), socket);
     }
 
