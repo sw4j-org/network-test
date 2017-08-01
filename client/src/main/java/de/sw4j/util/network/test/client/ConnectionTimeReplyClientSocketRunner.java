@@ -79,8 +79,10 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
     }
 
     private void communicate() {
+        ClientResult.Builder clientResultBuilder = new ClientResult.Builder();
         DateTimeFormatter dtf = DateTimeFormatter.ISO_INSTANT;
         Instant start = Instant.now();
+        clientResultBuilder.setStart(start);
 
         Socket socket;
         try {
@@ -92,6 +94,7 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
         }
 
         Instant connected = Instant.now();
+        clientResultBuilder.setConnected(connected);
 
         char[] response = new char[1024];
         StringBuilder requestSb = new StringBuilder();
@@ -135,6 +138,7 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
             while ((byteRead = responseReader.read(response)) >= 0) {
                 if (firstResponse == null) {
                     firstResponse = Instant.now();
+                    clientResultBuilder.setFirstResponse(firstResponse);
                 }
                 responseSb.append(response, 0, byteRead);
             }
@@ -145,11 +149,13 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
         }
 
         Instant received = Instant.now();
+        clientResultBuilder.setCompleted(received);
 
         int lineBreak = responseSb.indexOf("\n");
         Instant serverTime;
         try {
             serverTime = Instant.from(dtf.parse(responseSb, new ParsePosition(lineBreak + 1)));
+            clientResultBuilder.setServerReceived(serverTime);
         } catch (DateTimeParseException dtpex) {
             LOG.log(Level.WARNING, "Error while parsing the response.", dtpex);
             this.hasError = true;
@@ -181,13 +187,7 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
         }
 
         try {
-            collector.queueResult(new ClientResult.Builder()
-                    .setStart(start)
-                    .setConnected(connected)
-                    .setServerReceived(serverTime)
-                    .setFirstResponse(firstResponse)
-                    .setCompleted(received)
-                    .build());
+            collector.queueResult(clientResultBuilder.build());
         } catch (InterruptedException iex) {
             LOG.log(Level.INFO, "Interrupted while publishing result.", iex);
         }
