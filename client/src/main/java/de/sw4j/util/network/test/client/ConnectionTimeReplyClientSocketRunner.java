@@ -30,6 +30,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -53,15 +55,34 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
 
     private int numberCalls;
 
-    private final ResultCollector collector;
+    private final List<ResultCollector> collectors;
 
-    public ConnectionTimeReplyClientSocketRunner(long threads, String serverHost, int serverPort,
-            ResultCollector collector) {
+    public ConnectionTimeReplyClientSocketRunner(long threads, String serverHost, int serverPort) {
         this.threads = threads;
         this.serverHost = serverHost;
         this.serverPort = serverPort;
         LOG.log(Level.INFO, new StringBuilder("Number of threads: ").append(this.threads).append("\n").toString());
-        this.collector = collector;
+        this.collectors = new LinkedList<>();
+    }
+
+    public ConnectionTimeReplyClientSocketRunner(long threads, String serverHost, int serverPort,
+            ResultCollector collector) {
+        this(threads, serverHost, serverPort);
+        this.collectors.add(collector);
+    }
+
+    public void addCollector(ResultCollector collector) {
+        this.collectors.add(collector);
+    }
+
+    public void removeCollector(ResultCollector collector) {
+        this.collectors.remove(collector);
+    }
+
+    private void queueReslts(ClientResult result) throws InterruptedException {
+        for(ResultCollector collector: this.collectors) {
+            collector.queueResult(result);
+        }
     }
 
     @Override
@@ -171,12 +192,11 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
         }
         responseSb.append("\n");
 
-        Duration connectTime = Duration.between(start, connected);
-        responseSb.append("Connect Time: ").append(connectTime.toString()).append("\n");
-        Duration serverReceive = Duration.between(start, serverTime);
-        responseSb.append("Server Receive: ").append(serverReceive.toString()).append("\n");
-        Duration responseTime = Duration.between(start, received);
-        responseSb.append("Response Time: ").append(responseTime.toString()).append("\n");
+        ClientResult result = clientResultBuilder.build();
+        responseSb.append("Connect Time: ").append(result.getConnectTime().toString()).append("\n");
+        responseSb.append("Server Receive: ").append(result.getServerReceivedTime().toString()).append("\n");
+        responseSb.append("Latency: ").append(result.getLatency().toString()).append("\n");
+        responseSb.append("Response Time: ").append(result.getResponseTime().toString()).append("\n");
         LOG.log(Level.FINE, responseSb.toString());
 
         try {
@@ -187,7 +207,7 @@ public class ConnectionTimeReplyClientSocketRunner implements Runnable {
         }
 
         try {
-            collector.queueResult(clientResultBuilder.build());
+            queueReslts(result);
         } catch (InterruptedException iex) {
             LOG.log(Level.INFO, "Interrupted while publishing result.", iex);
         }

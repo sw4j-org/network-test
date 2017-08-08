@@ -16,15 +16,15 @@
  */
 package de.sw4j.util.network.test.report;
 
-import java.util.logging.Level;
+import java.io.BufferedInputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Logger;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import javax.net.ServerSocketFactory;
 
 /**
  *
@@ -34,35 +34,28 @@ public class ClientReport {
 
     private static final Logger LOG = Logger.getLogger(ClientReport.class.getName());
 
-    public static void main(String... args) {
+    public static void main(String... args) throws Exception {
         ClientReport report = new ClientReport();
-        report.configure(args);
+        report.run(args);
     }
 
-    public void configure(String... args) {
-        Options options = new Options();
-
-        options.addOption("h", "help", false, "Show this help");
-
-        options.addOption(Option.builder("d")
-                .required()
-                .hasArg()
-                .longOpt("data")
-                .desc("The data for the report")
-                .build());
-
-        CommandLineParser parser = new DefaultParser();
-        CommandLine cl = null;
-        try {
-            cl = parser.parse(options, args);
-        } catch (ParseException pex) {
-            LOG.log(Level.SEVERE, "Cannot parse command line arguments.");
-            System.exit(-1);
-        }
-        if (cl.hasOption("help")) {
-            HelpFormatter helpFormatter = new HelpFormatter();
-            helpFormatter.printHelp("Client Report", options);
-            System.exit(0);
+    public void run(String... args) throws Exception {
+        ExecutorService service = Executors.newCachedThreadPool();
+        ServerSocket serverSocket = ServerSocketFactory.getDefault().createServerSocket(9900);
+        while (true) {
+            Socket client = serverSocket.accept();
+            service.submit(() -> {
+                try {
+                    Reader reader = new InputStreamReader(new BufferedInputStream(client.getInputStream()));
+                    char[] buf = new char[4096];
+                    int charsRead = 0;
+                    while ((charsRead = reader.read(buf)) > 0) {
+                        System.out.println(buf);
+                    }
+                } catch (Exception ex) {
+                    System.err.println(ex.getMessage());
+                }
+            });
         }
     }
 

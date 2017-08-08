@@ -31,7 +31,7 @@ import java.util.logging.Logger;
 
 /**
  *
- * @author Uwe Plonus
+ * @author Uwe Plonus &lt;u.plonus@gmail.com&gt;
  */
 public abstract class ServerRunnable implements Runnable {
 

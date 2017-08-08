@@ -19,6 +19,7 @@ package de.sw4j.util.network.test.client;
 import de.sw4j.util.network.test.common.ClientResult;
 import java.io.File;
 import java.io.IOException;
+import java.net.Socket;
 import java.text.MessageFormat;
 import java.util.Date;
 import java.util.concurrent.CancellationException;
@@ -30,6 +31,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.net.SocketFactory;
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -143,7 +145,7 @@ public class ConnectionTimeReplyClient {
             throw new IllegalStateException("Client not configured.");
         }
 
-        ExecutorService resultExecutor = Executors.newSingleThreadExecutor();
+        ExecutorService resultExecutor = Executors.newCachedThreadPool();
         ScheduledExecutorService requestExecutorService = Executors.newSingleThreadScheduledExecutor();
         ScheduledExecutorService stopExecutorService = Executors.newSingleThreadScheduledExecutor();
         int startThreads = this.clientConfig.getMinThreads();
@@ -155,8 +157,15 @@ public class ConnectionTimeReplyClient {
         if (resultFile.exists()) {
             resultFile.delete();
         }
-        ClientResultOutputRunner resultRunner = new ClientResultOutputRunner(resultFile);
-        resultExecutor.submit(resultRunner);
+        ClientResultOutputRunner fileResultRunner = new ClientResultOutputRunner(resultFile);
+        resultExecutor.submit(fileResultRunner);
+        ClientResultOutputRunner liveResultRunner = null;
+        if (clientConfig.getLiveServerHost() != null && clientConfig.getLiveServerPort() != null) {
+            Socket liveSocket = SocketFactory.getDefault().createSocket(clientConfig.getLiveServerHost(),
+                    clientConfig.getLiveServerPort());
+            liveResultRunner = new ClientResultOutputRunner(liveSocket.getOutputStream());
+            resultExecutor.submit(liveResultRunner);
+        }
         while (run) {
             double seriesNumber = i / SERIES.length;
             long threads = Math.round(SERIES[i % SERIES.length] * Math.pow(10, seriesNumber));
@@ -164,7 +173,10 @@ public class ConnectionTimeReplyClient {
             if (threads >= startThreads) {
                 if (threads <= endThreads) {
                     ConnectionTimeReplyClientSocketRunner runner = new ConnectionTimeReplyClientSocketRunner(threads,
-                            this.clientConfig.getTcpServerHost(), clientConfig.getTcpServerPort(), resultRunner);
+                            this.clientConfig.getTcpServerHost(), clientConfig.getTcpServerPort(), fileResultRunner);
+                    if (liveResultRunner != null) {
+                        runner.addCollector(liveResultRunner);
+                    }
                     final ScheduledFuture future = requestExecutorService.scheduleAtFixedRate(
                             runner, 0, this.clientConfig.getBurstLengthSec(), TimeUnit.SECONDS);
                     ScheduledFuture stopFuture = stopExecutorService.schedule(() -> {
@@ -179,7 +191,10 @@ public class ConnectionTimeReplyClient {
                 }
             }
         }
-        resultRunner.queueResult(new ClientResult.Builder().build());
+        fileResultRunner.queueResult(new ClientResult.Builder().build());
+        if (liveResultRunner != null) {
+            liveResultRunner.queueResult(new ClientResult.Builder().build());
+        }
 
         requestExecutorService.shutdown();
         stopExecutorService.shutdown();

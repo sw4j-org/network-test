@@ -16,21 +16,37 @@
  */
 package de.sw4j.util.network.test.report;
 
+import de.sw4j.util.network.test.report.live.ClientResultAcceptor;
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 /**
  *
  * @author Uwe Plonus &lt;u.plonus@gmail.com&gt;
  */
-public class ClientReportFX extends Application {
+public class ClientReportFX extends Application implements ApplicationShutdown {
 
     private static final Logger LOG = Logger.getLogger(ClientReportFX.class.getName());
+
+    private final ExecutorService serverAcceptService = Executors.newSingleThreadExecutor();
+
+    private final ExecutorService connectionRunService = Executors.newCachedThreadPool();
+
+    private ServerSocket serverSocket;
+
+    private ClientResultAcceptor acceptor;
+
+    private MainWindowController controller;
 
     public static void main(String[] args) {
         launch(args);
@@ -38,75 +54,31 @@ public class ClientReportFX extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        FXMLLoader loader = new FXMLLoader();
-        loader.setLocation(getClass().getResource("ClientReport.fxml"));
+        FXMLLoader loader = new FXMLLoader(MainWindowController.class.getResource("MainWindow.fxml"));
         Parent root = loader.load();
 
-        ClientReportController controller = loader.getController();
+        this.controller = loader.getController();
+        controller.setWindow(stage);
+        controller.setApplicationShutdown(this);
 
-//        controller.setConnectTimes();
-
-//        Parent root = FXMLLoader.load(getClass().getResource("ClientReport.fxml"));
-
-//        stage.setTitle("");
-//        List<String> parameters = getParameters().getRaw();
-//
-//        System.out.println(parameters.size());
-//        for (String parameterKey: parameters) {
-//            System.out.println(parameterKey);
-//        }
-//
-//        CategoryAxis xAxis = new CategoryAxis();
-//        xAxis.setLabel("Time");
-//        xAxis.setTickLabelRotation(-90.0);
-//
-//        NumberAxis yAxis = new NumberAxis();
-//        yAxis.setTickUnit(1.0);
-//
-//        LineChart<String, Number> lineChart = new LineChart<>(xAxis, yAxis);
-//
-//        lineChart.setTitle("Connect Time");
-//        lineChart.setCreateSymbols(false);
-//
-//        XYChart.Series<String, Number> series = new XYChart.Series<>();
-//        series.setName("Connect Time");
-//        series.getData().add(new XYChart.Data<>("09:00", 20, 2));
-//        series.getData().add(new XYChart.Data<>("09:01", 22, 1));
-//        series.getData().add(new XYChart.Data<>("09:02", 18, 2));
-//        series.getData().add(new XYChart.Data<>("09:03", 19, 2));
-//        series.getData().add(new XYChart.Data<>("09:04", 21, 2));
-//        series.getData().add(new XYChart.Data<>("09:05", 30, 2));
-//        series.getData().add(new XYChart.Data<>("09:06", 29, 2));
-//        series.getData().add(new XYChart.Data<>("09:07", 35, 2));
-//        series.getData().add(new XYChart.Data<>("09:08", 33, 2));
-//        series.getData().add(new XYChart.Data<>("09:09", 34, 2));
-//        series.getData().add(new XYChart.Data<>("09:10", 32, 2));
-//        series.getData().add(new XYChart.Data<>("09:11", 30, 2));
-//        series.getData().add(new XYChart.Data<>("09:12", 33, 2));
-//        series.getData().add(new XYChart.Data<>("09:13", 32, 2));
-//        series.getData().add(new XYChart.Data<>("09:14", 30, 2));
-//        series.getData().add(new XYChart.Data<>("09:15", 28, 2));
-//        series.getData().add(new XYChart.Data<>("09:16", 29, 2));
-//        series.getData().add(new XYChart.Data<>("09:17", 27, 2));
-//        series.getData().add(new XYChart.Data<>("09:18", 25, 2));
-//        series.getData().add(new XYChart.Data<>("09:19", 24, 2));
-//        series.getData().add(new XYChart.Data<>("09:20", 25, 2));
-//        series.getData().add(new XYChart.Data<>("09:21", 23, 2));
-//        series.getData().add(new XYChart.Data<>("09:22", 20, 2));
-//        series.getData().add(new XYChart.Data<>("09:23", 21, 2));
-//        series.getData().add(new XYChart.Data<>("09:24", 23, 2));
-//        series.getData().add(new XYChart.Data<>("09:25", 22, 2));
-//        series.getData().add(new XYChart.Data<>("09:26", 21, 2));
-//        series.getData().add(new XYChart.Data<>("09:27", 25, 2));
-//        series.getData().add(new XYChart.Data<>("09:28", 24, 2));
-//        series.getData().add(new XYChart.Data<>("09:29", 20, 2));
-//
         Scene scene = new Scene(root);
-//        lineChart.getData().add(series);
-//
+
         stage.setScene(scene);
         stage.setMaximized(true);
         stage.show();
+        stage.setOnCloseRequest((WindowEvent event) -> {
+            ClientReportFX.this.shutdown();
+        });
+
+        this.acceptor = new ClientResultAcceptor(9900);
+        controller.liveData(acceptor);
+
+    }
+
+    @Override
+    public void shutdown() {
+        controller.shutdown();
+        Platform.exit();
     }
 
 }

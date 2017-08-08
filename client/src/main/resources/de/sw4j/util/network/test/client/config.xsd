@@ -42,6 +42,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         </xs:annotation>
       </xs:element>
       <xs:element name="resultFile" type="xs:string" minOccurs="0" default="result-{0,date,yyyyMMdd}-{0,time,HHmmss}.xml"/>
+      <xs:element name="liveServerHost" type="xs:string" minOccurs="0"/>
+      <xs:element name="liveServerPort" type="xs:int" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
 

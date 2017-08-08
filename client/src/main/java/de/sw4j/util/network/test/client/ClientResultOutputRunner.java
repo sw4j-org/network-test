@@ -21,6 +21,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.time.format.DateTimeFormatter;
@@ -50,8 +51,11 @@ public class ClientResultOutputRunner implements Runnable, ResultCollector {
     }
 
     public ClientResultOutputRunner(File outputFile) throws IOException, XMLStreamException {
-        this(new BufferedWriter(new OutputStreamWriter(
-                new FileOutputStream(outputFile, true), "UTF-8")));
+        this(new FileOutputStream(outputFile, true));
+    }
+
+    public ClientResultOutputRunner(OutputStream outputStream) throws IOException, XMLStreamException {
+        this(new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8")));
     }
 
     private ClientResultOutputRunner(Writer targetWriter) throws IOException, XMLStreamException {
