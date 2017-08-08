@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <xs:sequence>
       <xs:element name="tcpServerHost" type="xs:string" minOccurs="0" default="localhost"/>
       <xs:element name="tcpServerPort" type="xs:int" minOccurs="0" default="9099"/>
-      <xs:element name="burstLengthSec" type="xs:int" minOccurs="0" default="10"/>
+      <xs:element name="burstLengthSec" type="xs:int" minOccurs="0" default="1"/>
       <xs:element name="increaseAfterMin" type="xs:int" minOccurs="0" default="5"/>
       <xs:element name="minThreads" type="xs:int">
         <xs:annotation>

@@ -16,6 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <clientConfig xmlns="http://www.sw4j.de/schema/util/network/test/client">
+  <!--<tcpServerHost>localhost</tcpServerHost>-->
+  <!--<tcpServerPort>9099</tcpServerPort>-->
+  <!--<burstLengthSec>1</burstLengthSec>-->
+  <!--<increaseAfterMin>5</increaseAfterMin>-->
   <minThreads>100</minThreads>
   <maxThreads>10000</maxThreads>
+  <!--<resultFile>result-{0,date,yyyyMMdd}-{0,time,HHmmss}.xml</resultFile>-->
+  <!--<liveServerHost></liveServerHost>-->
+  <!--<liveServerPort></liveServerPort>-->
 </clientConfig>

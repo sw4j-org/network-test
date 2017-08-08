@@ -21,3 +21,5 @@ buildNumber.properties
 /server/nbactions.xml
 /client/nbactions.xml
 /reporting/nbactions.xml
+/client/etc/dev-client-config.xml
+/server/etc/dev-server-config.xml

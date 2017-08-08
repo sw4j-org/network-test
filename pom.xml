@@ -46,6 +46,8 @@
     <commons-cli.version>1.4</commons-cli.version>
 
     <!-- Plugins -->
+    <appassemblerPluginVersion>2.0.0</appassemblerPluginVersion>
+    <assemblyPluginVersion>3.0.0</assemblyPluginVersion>
     <jaxb2-plugin-version>0.13.1</jaxb2-plugin-version>
     <jxr-plugin-version>2.5</jxr-plugin-version>
     <scm-publish-plugin-version>1.1</scm-publish-plugin-version>
@@ -88,6 +90,11 @@
         <groupId>commons-cli</groupId>
         <artifactId>commons-cli</artifactId>
         <version>${commons-cli.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.codehaus.mojo.appassembler</groupId>
+        <artifactId>appassembler-booter</artifactId>
+        <version>${appassemblerPluginVersion}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -138,6 +145,11 @@
       <plugins>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>${assemblyPluginVersion}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-scm-publish-plugin</artifactId>
           <version>${scm-publish-plugin-version}</version>
         </plugin>
@@ -150,6 +162,11 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-site-plugin</artifactId>
           <version>${site-plugin-version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>appassembler-maven-plugin</artifactId>
+          <version>${appassemblerPluginVersion}</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -195,6 +212,12 @@
       </plugin>
     </plugins>
   </reporting>
+
+  <profiles>
+    <profile>
+      <id>release</id>
+    </profile>
+  </profiles>
 
   <scm>
     <developerConnection>scm:git:ssh://git@github.com:uweplonus/network-test.git</developerConnection>

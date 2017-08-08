@@ -46,7 +46,7 @@ public class ReplyServer {
 
     private static final Logger LOG = Logger.getLogger(ReplyServer.class.getName());
 
-    private static final String DEFAULT_CONFIGURATION_FILE_NAME = "config/server-config.xml";
+    private static final String DEFAULT_CONFIGURATION_FILE_NAME = "etc/server-config.xml";
 
     private ServerConfigType serverConfig;
 
@@ -57,6 +57,10 @@ public class ReplyServer {
     }
 
     public void configure(String... args) {
+        if (System.getProperty("app.home") == null) {
+            System.setProperty("app.home", new File("").getAbsolutePath());
+        }
+
         CommandLine cl = parseCommandLine(args);
 
         String configurationFileName = cl.getOptionValue("conf");
@@ -64,6 +68,9 @@ public class ReplyServer {
             configurationFileName = DEFAULT_CONFIGURATION_FILE_NAME;
         }
         File configurationFile = new File(configurationFileName);
+        if (!configurationFile.isAbsolute()) {
+            configurationFile = new File(System.getProperty("app.home"), configurationFileName);
+        }
 
         if (configurationFile.exists()) {
             try {

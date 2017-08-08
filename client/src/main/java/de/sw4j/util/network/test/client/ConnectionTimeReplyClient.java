@@ -57,7 +57,7 @@ public class ConnectionTimeReplyClient {
 
     private static final Logger LOG = Logger.getLogger(ConnectionTimeReplyClientSocketRunner.class.getName());
 
-    private static final String DEFAULT_CONFIGURATION_FILE_NAME = "config/client-config.xml";
+    private static final String DEFAULT_CONFIGURATION_FILE_NAME = "etc/client-config.xml";
 
     private static final String DEFAULT_RESULT_FILE_NAME = "result-{0,date,yyyyMMdd}-{0,time,HHmmss}.xml";
 
@@ -72,6 +72,10 @@ public class ConnectionTimeReplyClient {
     }
 
     public void configure(String... args) {
+        if (System.getProperty("app.home") == null) {
+            System.setProperty("app.home", new File("").getAbsolutePath());
+        }
+
         CommandLine cl = parseCommandLine(args);
 
         String configurationFileName = cl.getOptionValue("conf");
@@ -79,6 +83,9 @@ public class ConnectionTimeReplyClient {
             configurationFileName = DEFAULT_CONFIGURATION_FILE_NAME;
         }
         File configurationFile = new File(configurationFileName);
+        if (!configurationFile.isAbsolute()) {
+            configurationFile = new File(System.getProperty("app.home"), configurationFileName);
+        }
 
         if (configurationFile.exists()) {
             try {
@@ -99,7 +106,7 @@ public class ConnectionTimeReplyClient {
                     this.clientConfig.setTcpServerPort(9099);
                 }
                 if (this.clientConfig.getBurstLengthSec() == null) {
-                    this.clientConfig.setBurstLengthSec(10);
+                    this.clientConfig.setBurstLengthSec(1);
                 }
                 if (this.clientConfig.getIncreaseAfterMin() == null) {
                     this.clientConfig.setIncreaseAfterMin(5);
