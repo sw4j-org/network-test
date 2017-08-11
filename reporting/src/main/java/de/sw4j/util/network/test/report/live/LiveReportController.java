@@ -24,17 +24,14 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.OptionalDouble;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-import java.util.function.Predicate;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -61,25 +58,13 @@ public class LiveReportController implements DataReporter {
     private LineChart<String, Number> connectTimeChart;
 
     @FXML
-    private CategoryAxis connectTimeCategory;
-
-    @FXML
     private LineChart<String, Number> serverTimeChart;
-
-    @FXML
-    private CategoryAxis serverTimeCategory;
 
     @FXML
     private LineChart<String, Number> latencyChart;
 
     @FXML
-    private CategoryAxis latencyCategory;
-
-    @FXML
     private LineChart<String, Number> responseTimeChart;
-
-    @FXML
-    private CategoryAxis responseTimeCategory;
 
     @FXML
     private TextField connectField;
@@ -95,9 +80,6 @@ public class LiveReportController implements DataReporter {
 
     @FXML
     private BarChart<String, Number> drops;
-
-    @FXML
-    private CategoryAxis dropCategory;
 
     private LiveDataRunnable liveDataRunnable;
 
@@ -242,7 +224,7 @@ public class LiveReportController implements DataReporter {
 
         calculationService.submit(() -> {
             SortedMap<Instant, DataProcessor.DropData> dropsCalculated = DataProcessor.calculateDrops(calculationData);
-            updateDrops(drops, partitionedData, categoriesLabels, dropsCalculated);
+            updateDrops(drops, (SortedSet)partitionedData.keySet(), categoriesLabels, dropsCalculated);
         });
     }
 
@@ -270,20 +252,12 @@ public class LiveReportController implements DataReporter {
             SortedMap<Instant, List<ClientResult>> partitionedData, SortedMap<Instant, String> categoriesLabels,
             SortedMap<Instant, DataProcessor.StatisticData> calculated) {
         Platform.runLater(() -> {
-//            ObservableList<String> connectCategories = timeCategory.getCategories();
             ObservableList<String> timeCategories = ((CategoryAxis)timeChart.getXAxis()).getCategories();
-//            ObservableList<String> dropCategories = null;
-//            if (dropChart != null) {
-//                dropCategories = ((CategoryAxis)dropChart.getXAxis()).getCategories();
-//            }
             timeChart.setCreateSymbols(timeCategories.size() <= 1);
             for (Instant interval: partitionedData.keySet()) {
                 if (timeCategories.isEmpty()) {
                     String categoryLabel = categoriesLabels.get(interval);
                     timeCategories.add(categoryLabel);
-//                    if (dropCategories != null) {
-//                        dropCategories.add(categoryLabel);
-//                    }
 
                     XYChart.Series<String, Number> minSeries = new XYChart.Series<>();
                     minSeries.setName("min");
@@ -325,12 +299,6 @@ public class LiveReportController implements DataReporter {
                     p99Series.getData().add(new XYChart.Data<>(categoryLabel, calculated.get(interval).getP99()));
                     timeChart.getData().add(p99Series);
 
-//                    if (dropChart != null) {
-//                        XYChart.Series<String, Number> dropSeries = new XYChart.Series<>();
-//                        dropSeries.setName("Drops");
-//                        dropSeries.getData().add(new XYChart.Data<>(categoryLabel, calculated.get(interval).getDrops()));
-//                        dropChart.getData().add(dropSeries);
-//                    }
                 } else {
                     int pos;
                     if ((pos = timeCategories.indexOf(categoriesLabels.get(interval))) >= 0) {
@@ -358,16 +326,9 @@ public class LiveReportController implements DataReporter {
                         XYChart.Series<String, Number> p99Series = timeChart.getData().get(7);
                         p99Series.getData().get(pos).setYValue(calculated.get(interval).getP99());
 
-//                        if (dropChart != null) {
-//                            XYChart.Series<String, Number> dropSeries = dropChart.getData().get(0);
-//                            dropSeries.getData().get(pos).setYValue(calculated.get(interval).getDrops());
-//                        }
                     } else {
                         String categoryLabel = categoriesLabels.get(interval);
                         timeCategories.add(categoryLabel);
-//                        if (dropCategories != null) {
-//                            dropCategories.add(categoryLabel);
-//                        }
 
                         XYChart.Series<String, Number> minSeries = timeChart.getData().get(0);
                         minSeries.getData().add(new XYChart.Data<>(categoryLabel, calculated.get(interval).getMin()));
@@ -394,22 +355,17 @@ public class LiveReportController implements DataReporter {
                         XYChart.Series<String, Number> p99Series = timeChart.getData().get(7);
                         p99Series.getData().add(new XYChart.Data<>(categoryLabel, calculated.get(interval).getP99()));
 
-//                        if (dropChart != null) {
-//                            XYChart.Series<String, Number> dropSeries = dropChart.getData().get(0);
-//                            dropSeries.getData().add(new XYChart.Data<>(categoryLabel,
-//                                    calculated.get(interval).getDrops()));
-//                        }
                     }
                 }
             }
         });
     }
 
-    private void updateDrops(BarChart<String, Number> dropChart, SortedMap<Instant, List<ClientResult>> partitionedData,
+    private void updateDrops(BarChart<String, Number> dropChart, SortedSet<Instant> partitions,
             SortedMap<Instant, String> categoriesLabels, SortedMap<Instant, DataProcessor.DropData> calculated) {
         Platform.runLater(() -> {
             ObservableList<String> dropCategories = ((CategoryAxis)dropChart.getXAxis()).getCategories();
-            for (Instant interval: partitionedData.keySet()) {
+            for (Instant interval: partitions) {
                 if (dropCategories.isEmpty()) {
                     String categoryLabel = categoriesLabels.get(interval);
                     dropCategories.add(categoryLabel);

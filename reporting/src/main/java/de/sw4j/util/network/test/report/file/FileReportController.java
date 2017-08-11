@@ -19,7 +19,7 @@ package de.sw4j.util.network.test.report.file;
 import java.io.File;
 import java.util.logging.Logger;
 import javafx.fxml.FXML;
-import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.BarChart;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.control.ProgressIndicator;
@@ -38,33 +38,23 @@ public class FileReportController {
     private LineChart<String, Number> connectTimeChart;
 
     @FXML
-    private CategoryAxis connectTimeCategory;
-
-    @FXML
     private LineChart<String, Number> serverTimeChart;
-
-    @FXML
-    private CategoryAxis serverTimeCategory;
 
     @FXML
     private LineChart<String, Number> latencyChart;
 
     @FXML
-    private CategoryAxis latencyCategory;
-
-    @FXML
     private LineChart<String, Number> responseTimeChart;
 
     @FXML
-    private CategoryAxis responseTimeCategory;
+    private BarChart<String, Number> drops;
 
     @FXML
     private ProgressIndicator progressIndicator;
 
     public void loadData(File dataFile) {
-        FileReportLoader fileReportLoader = new FileReportLoader(dataFile, connectTimeChart, connectTimeCategory,
-                serverTimeChart, serverTimeCategory, latencyChart, latencyCategory,
-                responseTimeChart, responseTimeCategory, progressIndicator);
+        FileReportLoader fileReportLoader = new FileReportLoader(dataFile, connectTimeChart, serverTimeChart,
+                latencyChart, responseTimeChart, drops, progressIndicator);
         fileReportLoader.start();
     }
 

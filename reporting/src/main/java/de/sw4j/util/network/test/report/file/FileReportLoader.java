@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,6 +40,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
+import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
@@ -54,37 +56,26 @@ public class FileReportLoader extends Service<Void> {
 
     private final LineChart<String, Number> connectTimeChart;
 
-    private final CategoryAxis connectTimeCategory;
-
     private final LineChart<String, Number> serverTimeChart;
-
-    private final CategoryAxis serverTimeCategory;
 
     private final LineChart<String, Number> latencyChart;
 
-    private final CategoryAxis latencyCategory;
-
     private final LineChart<String, Number> responseTimeChart;
 
-    private final CategoryAxis responseTimeCategory;
+    private final BarChart<String, Number> dropChart;
 
     private final ProgressIndicator progressIndicator;
 
-    public FileReportLoader(File dataFile,
-            LineChart<String, Number> connectTimeChart, CategoryAxis connectTimeCategory,
-            LineChart<String, Number> serverTimeChart, CategoryAxis serverTimeCategory,
-            LineChart<String, Number> latencyChart, CategoryAxis latencyCategory,
-            LineChart<String, Number> responseTimeChart, CategoryAxis reponseTimeCategory,
+    public FileReportLoader(File dataFile, LineChart<String, Number> connectTimeChart,
+            LineChart<String, Number> serverTimeChart, LineChart<String, Number> latencyChart,
+            LineChart<String, Number> responseTimeChart, BarChart<String, Number> dropChart,
             ProgressIndicator progressIndicator) {
         this.dataFile = dataFile;
         this.connectTimeChart = connectTimeChart;
-        this.connectTimeCategory = connectTimeCategory;
         this.serverTimeChart = serverTimeChart;
-        this.serverTimeCategory = serverTimeCategory;
         this.latencyChart = latencyChart;
-        this.latencyCategory = latencyCategory;
         this.responseTimeChart = responseTimeChart;
-        this.responseTimeCategory = reponseTimeCategory;
+        this.dropChart = dropChart;
         this.progressIndicator = progressIndicator;
     }
 
@@ -98,31 +89,37 @@ public class FileReportLoader extends Service<Void> {
                 ResultReader resultReader = new ResultReader(new FileInputStream(dataFile));
                 resultReader.readData();
                 ClientResult[] data = resultReader.getFinalResult().toArray(new ClientResult[0]);
+                SortedMap<Instant, List<ClientResult>> partitionedData = DataProcessor.partitionData(
+                        resultReader.getFinalResult(),
+                        (ClientResult t) -> t.getStart().truncatedTo(ChronoUnit.MINUTES));
+
 
                 Future connectTimeChartFuture = chartExecutors.submit(() -> {
-                    fillChart(connectTimeChart, connectTimeCategory, data,
-                            (ClientResult r) -> r.getConnectTime());
+                    fillChart(connectTimeChart, data, (ClientResult r) -> r.getConnectTime());
                 });
 
                 Future serverReceivedTimeChartFuture = chartExecutors.submit(() -> {
-                    fillChart(serverTimeChart, serverTimeCategory, data,
-                            (ClientResult r) -> r.getServerReceivedTime());
+                    fillChart(serverTimeChart, data, (ClientResult r) -> r.getServerReceivedTime());
                 });
 
                 Future latencyChartFuture = chartExecutors.submit(() -> {
-                    fillChart(latencyChart, latencyCategory, data,
-                            (ClientResult r) -> r.getLatency());
+                    fillChart(latencyChart, data, (ClientResult r) -> r.getLatency());
                 });
 
                 Future responseTimeChartFuture = chartExecutors.submit(() -> {
-                    fillChart(responseTimeChart, responseTimeCategory, data,
-                            (ClientResult r) -> r.getResponseTime());
+                    fillChart(responseTimeChart, data, (ClientResult r) -> r.getResponseTime());
+                });
+
+                Future dropChartFuture = chartExecutors.submit(() -> {
+                    SortedMap<Instant, DataProcessor.DropData> dropData = DataProcessor.calculateDrops(partitionedData);
+                    updateDrops(dropChart, resultReader.getFinalResult(), dropData);
                 });
 
                 connectTimeChartFuture.get();
                 serverReceivedTimeChartFuture.get();
                 latencyChartFuture.get();
                 responseTimeChartFuture.get();
+                dropChartFuture.get();
 
                 Platform.runLater(() -> {
                     progressIndicator.setVisible(false);
@@ -135,7 +132,7 @@ public class FileReportLoader extends Service<Void> {
         };
     }
 
-    private void fillChart(LineChart<String, Number> chart, CategoryAxis timeAxis, ClientResult[] data,
+    private void fillChart(LineChart<String, Number> chart, ClientResult[] data,
             Function<ClientResult, Duration> timeFunction) {
         DateTimeFormatter categoryFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
@@ -150,7 +147,8 @@ public class FileReportLoader extends Service<Void> {
         SortedMap<Instant, DataProcessor.StatisticData> calculatedData =
                 DataProcessor.calculateStatistics(minutesData, timeFunction);
 
-        timeAxis.setCategories(FXCollections.observableList(new LinkedList<>(categoriesLabels.values())));
+        ((CategoryAxis)chart.getXAxis()).setCategories(FXCollections.observableList(
+                new LinkedList<>(categoriesLabels.values())));
 
         XYChart.Series<String, Number> minTimeSeries = new XYChart.Series<>();
         minTimeSeries.setName("min");
@@ -198,6 +196,55 @@ public class FileReportLoader extends Service<Void> {
             chart.getData().add(p90TimeSeries);
             chart.getData().add(p95TimeSeries);
             chart.getData().add(p99TimeSeries);
+        });
+    }
+
+//    private void fillChart(LineChart<String, Number> chart, ClientResult[] data,
+//            Function<ClientResult, Duration> timeFunction) {
+    private void updateDrops(BarChart<String, Number> dropChart, List<ClientResult> data,
+            SortedMap<Instant, DataProcessor.DropData> calculated) {
+        DateTimeFormatter categoryFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
+        SortedMap<Instant, List<ClientResult>> partitionedData = DataProcessor.partitionData(data,
+                (ClientResult t) -> t.getStart().truncatedTo(ChronoUnit.MINUTES));
+
+        SortedMap<Instant, String> categoriesLabels = new TreeMap<>();
+        partitionedData.keySet().stream().forEach((interval) -> {
+            categoriesLabels.put(interval, categoryFormatter.format(interval.atZone(ZoneId.systemDefault())));
+        });
+
+//        SortedMap<Instant, DataProcessor.StatisticData> calculatedData =
+//                DataProcessor.calculateStatistics(partitionedData, timeFunction);
+
+        ((CategoryAxis)dropChart.getXAxis()).setCategories(FXCollections.observableList(
+                new LinkedList<>(categoriesLabels.values())));
+
+        XYChart.Series<String, Number> connectSeries = new XYChart.Series<>();
+        connectSeries.setName("Connect");
+
+        XYChart.Series<String, Number> serverSeries = new XYChart.Series<>();
+        serverSeries.setName("Server");
+
+        XYChart.Series<String, Number> LatencySeries = new XYChart.Series<>();
+        LatencySeries.setName("Latency");
+
+        XYChart.Series<String, Number> responseSeries = new XYChart.Series<>();
+        responseSeries.setName("Response");
+
+        categoriesLabels.entrySet().stream().forEach((categories) -> {
+            String categoryLabel = categories.getValue();
+            DataProcessor.DropData dropData = calculated.get(categories.getKey());
+            connectSeries.getData().add(new XYChart.Data<>(categoryLabel, dropData.getConnect()));
+            serverSeries.getData().add(new XYChart.Data<>(categoryLabel, dropData.getServer()));
+            LatencySeries.getData().add(new XYChart.Data<>(categoryLabel, dropData.getLatency()));
+            responseSeries.getData().add(new XYChart.Data<>(categoryLabel, dropData.getResponse()));
+        });
+
+        Platform.runLater(() -> {
+            dropChart.getData().add(connectSeries);
+            dropChart.getData().add(serverSeries);
+            dropChart.getData().add(LatencySeries);
+            dropChart.getData().add(responseSeries);
         });
     }
 

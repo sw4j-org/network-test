@@ -19,14 +19,12 @@ package de.sw4j.util.network.test.report.common;
 import de.sw4j.util.network.test.common.ClientResult;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Function;
-import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 
