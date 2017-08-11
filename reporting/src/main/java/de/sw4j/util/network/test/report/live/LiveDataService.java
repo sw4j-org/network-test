@@ -18,10 +18,6 @@ package de.sw4j.util.network.test.report.live;
 
 import de.sw4j.util.network.test.common.ClientResult;
 import java.util.List;
-import java.util.OptionalDouble;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.stream.Stream;
 import javafx.concurrent.ScheduledService;
 import javafx.concurrent.Task;
 
@@ -31,8 +27,6 @@ import javafx.concurrent.Task;
  */
 class LiveDataService extends ScheduledService<Void> {
 
-//    private final ExecutorService calculationService = Executors.newCachedThreadPool();
-//
     private final LiveDataRunnable liveDataRunnable;
 
     private final DataReporter dataReporter;
@@ -48,7 +42,7 @@ class LiveDataService extends ScheduledService<Void> {
             @Override
             protected Void call() throws Exception {
                 List<ClientResult> data = liveDataRunnable.getResultReader().getIntermediateResult();
-                dataReporter.setPartialData(data);
+                dataReporter.addPartialData(data);
                 return null;
             }
         };

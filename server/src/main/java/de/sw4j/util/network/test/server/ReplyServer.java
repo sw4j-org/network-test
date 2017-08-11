@@ -121,7 +121,7 @@ public class ReplyServer {
             throw new IllegalStateException("Server not configured.");
         }
 
-        Server server = new ConnectionTimeReplySocketServer(serverConfig.getTcpPort());
+        Server server = new ConnectionTimeReplySocketServer(serverConfig.getTcpPort(), serverConfig.getPayloadSize());
         ExecutorService threadPool = Executors.newCachedThreadPool();
         while (true) {
             ServerRunnable runnable = server.accept();

@@ -20,6 +20,8 @@
           </Menu>
           <Menu mnemonicParsing="false" text="Help">
             <items>
+                  <MenuItem mnemonicParsing="false" onAction="#configure" text="Configure" />
+                  <SeparatorMenuItem mnemonicParsing="false" />
               <MenuItem mnemonicParsing="false" text="About" />
             </items>
           </Menu>

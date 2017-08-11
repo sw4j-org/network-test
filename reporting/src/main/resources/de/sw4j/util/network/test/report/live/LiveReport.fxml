@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.BarChart?>
 <?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
@@ -8,100 +9,31 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 
 <GridPane minHeight="300.0" minWidth="400.0" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.sw4j.util.network.test.report.live.LiveReportController">
    <columnConstraints>
-      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+      <ColumnConstraints hgrow="SOMETIMES" />
+      <ColumnConstraints hgrow="SOMETIMES" />
    </columnConstraints>
    <rowConstraints>
-      <RowConstraints minHeight="10.0" vgrow="NEVER" />
-      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="NEVER" />
-      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+      <RowConstraints vgrow="SOMETIMES" />
+      <RowConstraints vgrow="SOMETIMES" />
+      <RowConstraints vgrow="SOMETIMES" />
    </rowConstraints>
    <children>
-      <HBox>
-         <children>
-            <Label minWidth="75.0" text="Connect">
-               <HBox.margin>
-                  <Insets top="2.0" />
-               </HBox.margin>
-               <padding>
-                  <Insets left="6.0" right="3.0" top="5.0" />
-               </padding>
-            </Label>
-            <TextField fx:id="connectField" disable="true" editable="false" prefWidth="75.0">
-               <HBox.margin>
-                  <Insets top="2.0" />
-               </HBox.margin>
-            </TextField>
-         </children>
-      </HBox>
-      <HBox GridPane.columnIndex="1">
-         <children>
-            <Label minWidth="75.0" text="Server">
-               <HBox.margin>
-                  <Insets top="2.0" />
-               </HBox.margin>
-               <padding>
-                  <Insets left="6.0" right="3.0" top="5.0" />
-               </padding>
-            </Label>
-            <TextField fx:id="serverField" disable="true" editable="false" prefWidth="75.0">
-               <HBox.margin>
-                  <Insets top="2.0" />
-               </HBox.margin>
-            </TextField>
-         </children>
-      </HBox>
-      <HBox GridPane.rowIndex="1">
-         <children>
-            <Label minWidth="75.0" text="Latency">
-               <HBox.margin>
-                  <Insets top="2.0" />
-               </HBox.margin>
-               <padding>
-                  <Insets left="6.0" right="3.0" top="5.0" />
-               </padding>
-            </Label>
-            <TextField fx:id="latencyField" disable="true" editable="false" prefWidth="75.0">
-               <HBox.margin>
-                  <Insets top="2.0" />
-               </HBox.margin>
-            </TextField>
-         </children>
-      </HBox>
-      <HBox GridPane.columnIndex="1" GridPane.rowIndex="1">
-         <children>
-            <Label minWidth="75.0" text="Response">
-               <HBox.margin>
-                  <Insets top="2.0" />
-               </HBox.margin>
-               <padding>
-                  <Insets left="6.0" right="3.0" top="5.0" />
-               </padding>
-            </Label>
-            <TextField fx:id="responseField" disable="true" editable="false" prefWidth="75.0">
-               <HBox.margin>
-                  <Insets top="2.0" />
-               </HBox.margin>
-            </TextField>
-         </children>
-      </HBox>
-      <LineChart fx:id="connectTimeChart" createSymbols="false" legendSide="RIGHT" onScroll="#mouseScroll" GridPane.columnSpan="2" GridPane.rowIndex="2">
+      <LineChart fx:id="connectTimeChart" createSymbols="false" legendSide="RIGHT" onScroll="#mouseScroll" GridPane.rowIndex="1">
         <xAxis>
           <CategoryAxis fx:id="connectTimeCategory" label="Time" side="BOTTOM" />
         </xAxis>
         <yAxis>
           <NumberAxis label="Connect Time (ms)" side="LEFT" />
         </yAxis>
+         <GridPane.margin>
+            <Insets />
+         </GridPane.margin>
       </LineChart>
-      <LineChart fx:id="serverTimeChart" createSymbols="false" legendSide="RIGHT" onScroll="#mouseScroll" GridPane.columnIndex="2" GridPane.columnSpan="2" GridPane.rowIndex="2">
+      <LineChart fx:id="serverTimeChart" createSymbols="false" legendSide="RIGHT" onScroll="#mouseScroll" GridPane.columnIndex="1" GridPane.rowIndex="1">
         <xAxis>
           <CategoryAxis fx:id="serverTimeCategory" label="Time" side="BOTTOM" />
         </xAxis>
@@ -109,7 +41,7 @@
           <NumberAxis label="Server Time (ms)" side="LEFT" />
         </yAxis>
       </LineChart>
-      <LineChart fx:id="latencyChart" createSymbols="false" legendSide="RIGHT" onScroll="#mouseScroll" GridPane.columnSpan="2" GridPane.rowIndex="3">
+      <LineChart fx:id="latencyChart" createSymbols="false" legendSide="RIGHT" onScroll="#mouseScroll" GridPane.rowIndex="2">
         <xAxis>
           <CategoryAxis fx:id="latencyCategory" label="Time" side="BOTTOM" />
         </xAxis>
@@ -117,7 +49,7 @@
           <NumberAxis label="Latency (ms)" side="LEFT" />
         </yAxis>
       </LineChart>
-      <LineChart fx:id="responseTimeChart" createSymbols="false" legendSide="RIGHT" onScroll="#mouseScroll" GridPane.columnIndex="2" GridPane.columnSpan="2" GridPane.rowIndex="3">
+      <LineChart fx:id="responseTimeChart" createSymbols="false" legendSide="RIGHT" onScroll="#mouseScroll" GridPane.columnIndex="1" GridPane.rowIndex="2">
         <xAxis>
           <CategoryAxis fx:id="responseTimeCategory" label="Time" side="BOTTOM" />
         </xAxis>
@@ -125,5 +57,52 @@
           <NumberAxis label="Response Time (ms)" side="LEFT" />
         </yAxis>
       </LineChart>
+      <GridPane>
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" />
+          <ColumnConstraints hgrow="SOMETIMES" />
+            <ColumnConstraints hgrow="SOMETIMES" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+          <RowConstraints vgrow="NEVER" />
+            <RowConstraints vgrow="NEVER" />
+        </rowConstraints>
+         <children>
+            <Label minWidth="75.0" text="Connect">
+               <padding>
+                  <Insets left="6.0" right="3.0" top="5.0" />
+               </padding>
+            </Label>
+            <TextField fx:id="connectField" disable="true" editable="false" GridPane.columnIndex="1" />
+            <Label minWidth="75.0" text="Server" GridPane.rowIndex="1">
+               <padding>
+                  <Insets left="6.0" right="3.0" top="5.0" />
+               </padding>
+            </Label>
+            <TextField fx:id="serverField" disable="true" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <Label minWidth="75.0" text="Latency" GridPane.rowIndex="2">
+               <padding>
+                  <Insets left="6.0" right="3.0" top="5.0" />
+               </padding>
+            </Label>
+            <TextField fx:id="latencyField" disable="true" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            <Label minWidth="75.0" text="Response" GridPane.rowIndex="3">
+               <padding>
+                  <Insets left="6.0" right="3.0" top="5.0" />
+               </padding>
+            </Label>
+            <TextField fx:id="responseField" disable="true" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+         </children>
+      </GridPane>
+      <BarChart fx:id="drops" barGap="0.0" categoryGap="5.0" legendSide="RIGHT" GridPane.columnIndex="1">
+        <xAxis>
+          <CategoryAxis fx:id="dropCategory" label="Time" side="BOTTOM" />
+        </xAxis>
+        <yAxis>
+          <NumberAxis label="Drop" side="LEFT" />
+        </yAxis>
+      </BarChart>
    </children>
 </GridPane>

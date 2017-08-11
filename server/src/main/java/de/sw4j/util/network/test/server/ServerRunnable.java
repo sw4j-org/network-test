@@ -91,8 +91,10 @@ public abstract class ServerRunnable implements Runnable {
         }
         LOG.log(Level.FINEST, "Read request.");
 
+        Instant receivedRequest = Instant.now();
+
         try {
-            reply = requestHandler.handleRequest(reply, received);
+            reply = requestHandler.handleRequest(reply, receivedRequest);
         } catch (RequestHandlerException rhex) {
             LOG.log(Level.WARNING, rhex.getMessage(), rhex);
         }

@@ -180,7 +180,8 @@ public class ConnectionTimeReplyClient {
             if (threads >= startThreads) {
                 if (threads <= endThreads) {
                     ConnectionTimeReplyClientSocketRunner runner = new ConnectionTimeReplyClientSocketRunner(threads,
-                            this.clientConfig.getTcpServerHost(), clientConfig.getTcpServerPort(), fileResultRunner);
+                            this.clientConfig.getTcpServerHost(), clientConfig.getTcpServerPort(),
+                            clientConfig.getPayloadSize(), fileResultRunner);
                     if (liveResultRunner != null) {
                         runner.addCollector(liveResultRunner);
                     }

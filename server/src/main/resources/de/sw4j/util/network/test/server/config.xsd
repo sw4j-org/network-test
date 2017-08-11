@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   <xs:complexType name="serverConfigType">
     <xs:sequence>
       <xs:element name="tcpPort" type="xs:int" default="9099"/>
+      <xs:element name="payloadSize" type="xs:int" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
 

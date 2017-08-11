@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <!--
 Copyright (C) 2017 Uwe Plonus
 
@@ -15,15 +15,20 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<clientConfig xmlns="http://www.sw4j.de/schema/util/network/test/client">
-  <!--<tcpServerHost>localhost</tcpServerHost>-->
-  <!--<tcpServerPort>9099</tcpServerPort>-->
-  <!--<burstLengthSec>1</burstLengthSec>-->
-  <!--<increaseAfterMin>5</increaseAfterMin>-->
-  <minThreads>100</minThreads>
-  <maxThreads>10000</maxThreads>
-  <!--<payloadSize></payloadSize>-->
-  <!--<resultFile>result-{0,date,yyyyMMdd}-{0,time,HHmmss}.xml</resultFile>-->
-  <!--<liveServerHost></liveServerHost>-->
-  <!--<liveServerPort></liveServerPort>-->
-</clientConfig>
+
+<xs:schema targetNamespace="http://www.sw4j.de/schema/util/network/test/server"
+           xmlns="http://www.sw4j.de/schema/util/network/test/server"
+           xmlns:tns="http://www.sw4j.de/schema/util/network/test/server"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified"
+           version="2.0.0">
+
+  <xs:element name="reportConfig" type="reportConfigType"/>
+
+  <xs:complexType name="reportConfigType">
+    <xs:sequence>
+      <xs:element name="listenPort" type="xs:int" minOccurs="0" default="9900"/>
+    </xs:sequence>
+  </xs:complexType>
+
+</xs:schema>

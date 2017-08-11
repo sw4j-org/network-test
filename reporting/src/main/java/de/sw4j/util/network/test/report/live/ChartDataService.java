@@ -16,26 +16,30 @@
  */
 package de.sw4j.util.network.test.report.live;
 
-import de.sw4j.util.network.test.common.ClientResult;
-import java.util.List;
+import javafx.concurrent.ScheduledService;
+import javafx.concurrent.Task;
 
 /**
  *
  * @author Uwe Plonus &lt;u.plonus@gmail.com&gt;
  */
-public interface DataReporter {
+class ChartDataService extends ScheduledService<Void> {
 
-    /**
-     * Adds the given data to the result. This method may be called often to update the display of plan data fast.
-     *
-     * @param data the data to add.
-     */
-    void addPartialData(List<ClientResult> data);
+    private final DataReporter dataReporter;
 
-    /**
-     * Aggregate all data added via {@link #addPartialData(java.util.List)} since the last call. This method should not
-     * be called to often as it can involve lobger calculations.
-     */
-    void aggregatePartialData();
+    public ChartDataService(DataReporter dataReporter) {
+        this.dataReporter = dataReporter;
+    }
+
+    @Override
+    protected Task<Void> createTask() {
+        return new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                dataReporter.aggregatePartialData();
+                return null;
+            }
+        };
+    }
 
 }

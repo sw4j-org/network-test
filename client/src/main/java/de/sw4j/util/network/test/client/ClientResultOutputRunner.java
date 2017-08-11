@@ -95,10 +95,18 @@ public class ClientResultOutputRunner implements Runnable, ResultCollector {
                 try {
                     this.targetWriter.writeEmptyElement("result");
                     this.targetWriter.writeAttribute("start", dtf.format(result.getStart()));
-                    this.targetWriter.writeAttribute("connected", dtf.format(result.getConnected()));
-                    this.targetWriter.writeAttribute("serverReceived", dtf.format(result.getServerReceived()));
-                    this.targetWriter.writeAttribute("firstResponse", dtf.format(result.getFirstResponse()));
-                    this.targetWriter.writeAttribute("completed", dtf.format(result.getCompleted()));
+                    if (result.getConnected() != null) {
+                        this.targetWriter.writeAttribute("connected", dtf.format(result.getConnected()));
+                    }
+                    if (result.getServerReceived()!= null) {
+                        this.targetWriter.writeAttribute("serverReceived", dtf.format(result.getServerReceived()));
+                    }
+                    if (result.getFirstResponse()!= null) {
+                        this.targetWriter.writeAttribute("firstResponse", dtf.format(result.getFirstResponse()));
+                    }
+                    if (result.getCompleted()!= null) {
+                        this.targetWriter.writeAttribute("completed", dtf.format(result.getCompleted()));
+                    }
                     this.targetWriter.writeCharacters("\n");
                 } catch (XMLStreamException xsex) {
                     LOG.log(Level.WARNING, "Problems writing result data set.", xsex);

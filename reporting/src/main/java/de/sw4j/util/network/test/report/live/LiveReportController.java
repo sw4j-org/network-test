@@ -24,15 +24,21 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.OptionalDouble;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.function.Predicate;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
@@ -50,17 +56,6 @@ public class LiveReportController implements DataReporter {
 
     private final ExecutorService calculationService = Executors.newCachedThreadPool();
 
-    @FXML
-    private TextField connectField;
-
-    @FXML
-    private TextField serverField;
-
-    @FXML
-    private TextField latencyField;
-
-    @FXML
-    private TextField responseField;
 
     @FXML
     private LineChart<String, Number> connectTimeChart;
@@ -86,18 +81,50 @@ public class LiveReportController implements DataReporter {
     @FXML
     private CategoryAxis responseTimeCategory;
 
+    @FXML
+    private TextField connectField;
+
+    @FXML
+    private TextField serverField;
+
+    @FXML
+    private TextField latencyField;
+
+    @FXML
+    private TextField responseField;
+
+    @FXML
+    private BarChart<String, Number> drops;
+
+    @FXML
+    private CategoryAxis dropCategory;
+
     private LiveDataRunnable liveDataRunnable;
 
     private final SortedMap<Instant, List<ClientResult>> collectedData = new TreeMap<>();
+
+    private final Object dataLock = new Object();
+
+    private List<ClientResult> partialData;
+
+    public LiveReportController() {
+        synchronized(dataLock) {
+            this.partialData = new LinkedList<>();
+        }
+    }
 
     public void collectLiveData(LiveDataRunnable liveDataRunnable) {
         this.liveDataRunnable = liveDataRunnable;
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.submit(this.liveDataRunnable);
         Platform.runLater(() -> {
-            LiveDataService dataService = new LiveDataService(liveDataRunnable, this);
-            dataService.setPeriod(Duration.millis(250.0));
-            dataService.start();
+            LiveDataService liveDataService = new LiveDataService(liveDataRunnable, this);
+            liveDataService.setPeriod(Duration.millis(250.0));
+            liveDataService.start();
+
+            ChartDataService chartDataService = new ChartDataService(this);
+            chartDataService.setPeriod(Duration.seconds(2.0));
+            chartDataService.start();
         });
     }
 
@@ -117,9 +144,13 @@ public class LiveReportController implements DataReporter {
     }
 
     @Override
-    public void setPartialData(List<ClientResult> data) {
+    public void addPartialData(List<ClientResult> data) {
+        synchronized(dataLock) {
+            this.partialData.addAll(data);
+        }
         calculationService.submit(() -> {
             OptionalDouble avarageConnect = data.stream()
+                    .filter((ClientResult t) -> t.getConnectTime() != null)
                     .mapToDouble((ClientResult t) -> Long.valueOf(t.getConnectTime().toMillis()).doubleValue())
                     .average();
             if (avarageConnect.isPresent()) {
@@ -128,6 +159,7 @@ public class LiveReportController implements DataReporter {
         });
         calculationService.submit(() -> {
             OptionalDouble averageServer = data.stream()
+                    .filter((ClientResult t) -> t.getServerReceivedTime() != null)
                     .mapToDouble((ClientResult t) -> Long.valueOf(t.getServerReceivedTime().toMillis()).doubleValue())
                     .average();
             if (averageServer.isPresent()) {
@@ -136,6 +168,7 @@ public class LiveReportController implements DataReporter {
         });
         calculationService.submit(() -> {
             OptionalDouble averageLatency = data.stream()
+                    .filter((ClientResult t) -> t.getLatency()!= null)
                     .mapToDouble((ClientResult t) -> Long.valueOf(t.getLatency().toMillis()).doubleValue())
                     .average();
             if (averageLatency.isPresent()) {
@@ -144,6 +177,7 @@ public class LiveReportController implements DataReporter {
         });
         calculationService.submit(() -> {
             OptionalDouble averageResponse = data.stream()
+                    .filter((ClientResult t) -> t.getResponseTime() != null)
                     .mapToDouble((ClientResult t) -> Long.valueOf(t.getResponseTime().toMillis()).doubleValue())
                     .average();
             if (averageResponse.isPresent()) {
@@ -151,6 +185,15 @@ public class LiveReportController implements DataReporter {
             }
         });
 
+    }
+
+    @Override
+    public void aggregatePartialData() {
+        List<ClientResult> data;
+        synchronized(dataLock) {
+            data = this.partialData;
+            this.partialData = new LinkedList<>();
+        }
         DateTimeFormatter categoryFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
         SortedMap<Instant, List<ClientResult>> partitionedData = DataProcessor.partitionData(data,
@@ -174,32 +217,33 @@ public class LiveReportController implements DataReporter {
 
         calculationService.submit(() -> {
             SortedMap<Instant, DataProcessor.StatisticData> connectCalculated =
-                    DataProcessor.calculateStatistics(calculationData,
-                            (ClientResult r) -> Long.valueOf(r.getConnectTime().toMillis()).doubleValue());
-            updateCharts(connectTimeChart, connectTimeCategory, partitionedData, categoriesLabels, connectCalculated);
+                    DataProcessor.calculateStatistics(calculationData, (ClientResult r) -> r.getConnectTime());
+            updateChart(connectTimeChart, partitionedData, categoriesLabels, connectCalculated);
         });
 
         calculationService.submit(() -> {
             SortedMap<Instant, DataProcessor.StatisticData> serverCalculated =
-                    DataProcessor.calculateStatistics(calculationData,
-                            (ClientResult r) -> Long.valueOf(r.getServerReceivedTime().toMillis()).doubleValue());
-            updateCharts(serverTimeChart, serverTimeCategory, partitionedData, categoriesLabels, serverCalculated);
+                    DataProcessor.calculateStatistics(calculationData, (ClientResult r) -> r.getServerReceivedTime());
+            updateChart(serverTimeChart, partitionedData, categoriesLabels, serverCalculated);
         });
 
         calculationService.submit(() -> {
             SortedMap<Instant, DataProcessor.StatisticData> latencyCalculated =
-                    DataProcessor.calculateStatistics(calculationData,
-                            (ClientResult r) -> Long.valueOf(r.getLatency().toMillis()).doubleValue());
-            updateCharts(latencyChart, latencyCategory, partitionedData, categoriesLabels, latencyCalculated);
+                    DataProcessor.calculateStatistics(calculationData, (ClientResult r) -> r.getLatency());
+            updateChart(latencyChart, partitionedData, categoriesLabels, latencyCalculated);
         });
 
         calculationService.submit(() -> {
             SortedMap<Instant, DataProcessor.StatisticData> responseCalculated =
-                    DataProcessor.calculateStatistics(calculationData,
-                            (ClientResult r) -> Long.valueOf(r.getResponseTime().toMillis()).doubleValue());
-            updateCharts(responseTimeChart, responseTimeCategory, partitionedData, categoriesLabels, responseCalculated);
+                    DataProcessor.calculateStatistics(calculationData, (ClientResult r) -> r.getResponseTime());
+            updateChart(responseTimeChart, partitionedData, categoriesLabels,
+                    responseCalculated);
         });
 
+        calculationService.submit(() -> {
+            SortedMap<Instant, DataProcessor.DropData> dropsCalculated = DataProcessor.calculateDrops(calculationData);
+            updateDrops(drops, partitionedData, categoriesLabels, dropsCalculated);
+        });
     }
 
     private void setConnectAvarage(double average) {
@@ -222,16 +266,24 @@ public class LiveReportController implements DataReporter {
         Platform.runLater(() -> this.responseField.setText(nf.format(average)));
     }
 
-    private void updateCharts(LineChart<String, Number> timeChart, CategoryAxis timeCategory,
+    private void updateChart(LineChart<String, Number> timeChart,
             SortedMap<Instant, List<ClientResult>> partitionedData, SortedMap<Instant, String> categoriesLabels,
             SortedMap<Instant, DataProcessor.StatisticData> calculated) {
         Platform.runLater(() -> {
-            ObservableList<String> connectCategories = timeCategory.getCategories();
-            timeChart.setCreateSymbols(connectCategories.size() <= 1);
+//            ObservableList<String> connectCategories = timeCategory.getCategories();
+            ObservableList<String> timeCategories = ((CategoryAxis)timeChart.getXAxis()).getCategories();
+//            ObservableList<String> dropCategories = null;
+//            if (dropChart != null) {
+//                dropCategories = ((CategoryAxis)dropChart.getXAxis()).getCategories();
+//            }
+            timeChart.setCreateSymbols(timeCategories.size() <= 1);
             for (Instant interval: partitionedData.keySet()) {
-                if (connectCategories.isEmpty()) {
+                if (timeCategories.isEmpty()) {
                     String categoryLabel = categoriesLabels.get(interval);
-                    connectCategories.add(categoryLabel);
+                    timeCategories.add(categoryLabel);
+//                    if (dropCategories != null) {
+//                        dropCategories.add(categoryLabel);
+//                    }
 
                     XYChart.Series<String, Number> minSeries = new XYChart.Series<>();
                     minSeries.setName("min");
@@ -272,9 +324,16 @@ public class LiveReportController implements DataReporter {
                     p99Series.setName("99% percentile");
                     p99Series.getData().add(new XYChart.Data<>(categoryLabel, calculated.get(interval).getP99()));
                     timeChart.getData().add(p99Series);
+
+//                    if (dropChart != null) {
+//                        XYChart.Series<String, Number> dropSeries = new XYChart.Series<>();
+//                        dropSeries.setName("Drops");
+//                        dropSeries.getData().add(new XYChart.Data<>(categoryLabel, calculated.get(interval).getDrops()));
+//                        dropChart.getData().add(dropSeries);
+//                    }
                 } else {
                     int pos;
-                    if ((pos = connectCategories.indexOf(categoriesLabels.get(interval))) >= 0) {
+                    if ((pos = timeCategories.indexOf(categoriesLabels.get(interval))) >= 0) {
                         XYChart.Series<String, Number> minSeries = timeChart.getData().get(0);
                         minSeries.getData().get(pos).setYValue(calculated.get(interval).getMin());
 
@@ -298,9 +357,17 @@ public class LiveReportController implements DataReporter {
 
                         XYChart.Series<String, Number> p99Series = timeChart.getData().get(7);
                         p99Series.getData().get(pos).setYValue(calculated.get(interval).getP99());
+
+//                        if (dropChart != null) {
+//                            XYChart.Series<String, Number> dropSeries = dropChart.getData().get(0);
+//                            dropSeries.getData().get(pos).setYValue(calculated.get(interval).getDrops());
+//                        }
                     } else {
                         String categoryLabel = categoriesLabels.get(interval);
-                        connectCategories.add(categoryLabel);
+                        timeCategories.add(categoryLabel);
+//                        if (dropCategories != null) {
+//                            dropCategories.add(categoryLabel);
+//                        }
 
                         XYChart.Series<String, Number> minSeries = timeChart.getData().get(0);
                         minSeries.getData().add(new XYChart.Data<>(categoryLabel, calculated.get(interval).getMin()));
@@ -309,7 +376,8 @@ public class LiveReportController implements DataReporter {
                         maxSeries.getData().add(new XYChart.Data<>(categoryLabel, calculated.get(interval).getMax()));
 
                         XYChart.Series<String, Number> averageSeries = timeChart.getData().get(2);
-                        averageSeries.getData().add(new XYChart.Data<>(categoryLabel, calculated.get(interval).getAverage()));
+                        averageSeries.getData().add(new XYChart.Data<>(categoryLabel,
+                                calculated.get(interval).getAverage()));
 
                         XYChart.Series<String, Number> p50Series = timeChart.getData().get(3);
                         p50Series.getData().add(new XYChart.Data<>(categoryLabel, calculated.get(interval).getP50()));
@@ -325,6 +393,82 @@ public class LiveReportController implements DataReporter {
 
                         XYChart.Series<String, Number> p99Series = timeChart.getData().get(7);
                         p99Series.getData().add(new XYChart.Data<>(categoryLabel, calculated.get(interval).getP99()));
+
+//                        if (dropChart != null) {
+//                            XYChart.Series<String, Number> dropSeries = dropChart.getData().get(0);
+//                            dropSeries.getData().add(new XYChart.Data<>(categoryLabel,
+//                                    calculated.get(interval).getDrops()));
+//                        }
+                    }
+                }
+            }
+        });
+    }
+
+    private void updateDrops(BarChart<String, Number> dropChart, SortedMap<Instant, List<ClientResult>> partitionedData,
+            SortedMap<Instant, String> categoriesLabels, SortedMap<Instant, DataProcessor.DropData> calculated) {
+        Platform.runLater(() -> {
+            ObservableList<String> dropCategories = ((CategoryAxis)dropChart.getXAxis()).getCategories();
+            for (Instant interval: partitionedData.keySet()) {
+                if (dropCategories.isEmpty()) {
+                    String categoryLabel = categoriesLabels.get(interval);
+                    dropCategories.add(categoryLabel);
+
+                    XYChart.Series<String, Number> connectSeries = new XYChart.Series<>();
+                    connectSeries.setName("Connect");
+                    connectSeries.getData().add(
+                            new XYChart.Data<>(categoryLabel, calculated.get(interval).getConnect()));
+                    dropChart.getData().add(connectSeries);
+
+                    XYChart.Series<String, Number> serverSeries = new XYChart.Series<>();
+                    serverSeries.setName("Server");
+                    serverSeries.getData().add(new XYChart.Data<>(categoryLabel, calculated.get(interval).getServer()));
+                    dropChart.getData().add(serverSeries);
+
+                    XYChart.Series<String, Number> latencySeries = new XYChart.Series<>();
+                    latencySeries.setName("Latency");
+                    latencySeries.getData().add(
+                            new XYChart.Data<>(categoryLabel, calculated.get(interval).getLatency()));
+                    dropChart.getData().add(latencySeries);
+
+                    XYChart.Series<String, Number> responseSeries = new XYChart.Series<>();
+                    responseSeries.setName("Response");
+                    responseSeries.getData().add(
+                            new XYChart.Data<>(categoryLabel, calculated.get(interval).getResponse()));
+                    dropChart.getData().add(responseSeries);
+                } else {
+                    int pos;
+                    if ((pos = dropCategories.indexOf(categoriesLabels.get(interval))) >= 0) {
+                        XYChart.Series<String, Number> connectSeries = dropChart.getData().get(0);
+                        connectSeries.getData().get(pos).setYValue(calculated.get(interval).getConnect());
+
+                        XYChart.Series<String, Number> serverSeries = dropChart.getData().get(1);
+                        serverSeries.getData().get(pos).setYValue(calculated.get(interval).getServer());
+
+                        XYChart.Series<String, Number> latencySeries = dropChart.getData().get(2);
+                        latencySeries.getData().get(pos).setYValue(calculated.get(interval).getLatency());
+
+                        XYChart.Series<String, Number> responseSeries = dropChart.getData().get(3);
+                        responseSeries.getData().get(pos).setYValue(calculated.get(interval).getResponse());
+                    } else {
+                        String categoryLabel = categoriesLabels.get(interval);
+                        dropCategories.add(categoryLabel);
+
+                        XYChart.Series<String, Number> connectSeries = dropChart.getData().get(0);
+                        connectSeries.getData().add(
+                                new XYChart.Data<>(categoryLabel, calculated.get(interval).getConnect()));
+
+                        XYChart.Series<String, Number> serverSeries = dropChart.getData().get(1);
+                        serverSeries.getData().add(
+                                new XYChart.Data<>(categoryLabel, calculated.get(interval).getServer()));
+
+                        XYChart.Series<String, Number> latencySeries = dropChart.getData().get(2);
+                        latencySeries.getData().add(
+                                new XYChart.Data<>(categoryLabel, calculated.get(interval).getLatency()));
+
+                        XYChart.Series<String, Number> responseSeries = dropChart.getData().get(3);
+                        responseSeries.getData().add(
+                                new XYChart.Data<>(categoryLabel, calculated.get(interval).getResponse()));
                     }
                 }
             }

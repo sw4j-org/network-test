@@ -31,6 +31,9 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.DialogPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.stage.FileChooser;
@@ -55,10 +58,16 @@ public class MainWindowController {
 
     private Window window;
 
+    private ReportConfigType reportConfig;
+
     @FXML
     private TabPane tabPane;
 
     public MainWindowController() {
+    }
+
+    public void setReportConfig(ReportConfigType reportConfig) {
+        this.reportConfig = reportConfig;
     }
 
     public void setWindow(Window window) {
@@ -104,12 +113,14 @@ public class MainWindowController {
     }
 
     public void shutdown() {
-        this.serverAcceptService.shutdown();
-        try {
-            this.acceptor.shutdown();
-        } catch (IOException ioex) {
-            LOG.log(Level.INFO, "Exception while shutting down acceptor.", ioex);
+        if (this.acceptor != null) {
+            try {
+                this.acceptor.shutdown();
+            } catch (IOException ioex) {
+                LOG.log(Level.INFO, "Exception while shutting down acceptor.", ioex);
+            }
         }
+        this.serverAcceptService.shutdown();
     }
 
     public void liveData(ClientResultAcceptor acceptor) {
@@ -135,13 +146,37 @@ public class MainWindowController {
 
                     Platform.runLater(() -> {
                             this.tabPane.getTabs().add(tab);
-//                            this.tabPane.getSelectionModel().select(tab);
                     });
                 }
 
                 connectionRunService.submit(runnable);
             }
         });
+    }
+
+    @FXML
+    void configure(ActionEvent event) {
+        FXMLLoader loader = new FXMLLoader(ConfigurationController.class.getResource("Configuration.fxml"));
+        DialogPane configuration = null;
+        try {
+            configuration = loader.load();
+        } catch (IOException ioex) {
+            LOG.log(Level.WARNING, "Cannot load Configuration.", ioex);
+        }
+        if (configuration != null) {
+            ConfigurationController configurationController = loader.getController();
+
+            configurationController.setListenPort(this.reportConfig.getListenPort());
+
+            Dialog dialog = new Dialog();
+            dialog.setDialogPane(configuration);
+
+            dialog.showAndWait().ifPresent(response -> {
+                if (response == ButtonType.APPLY) {
+                    this.reportConfig.setListenPort(configurationController.getListenPort());
+                }
+            });
+        }
     }
 
 }

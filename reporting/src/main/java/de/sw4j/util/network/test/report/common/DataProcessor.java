@@ -17,6 +17,7 @@
 package de.sw4j.util.network.test.report.common;
 
 import de.sw4j.util.network.test.common.ClientResult;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -65,21 +66,84 @@ public final class DataProcessor {
     }
 
     public static SortedMap<Instant, StatisticData> calculateStatistics(Map<Instant, List<ClientResult>> data,
-            ToDoubleFunction<ClientResult> valueFunction) {
+            Function<ClientResult, Duration> instantFunction) {
         SortedMap<Instant, StatisticData> result = new TreeMap<>();
         data.keySet().stream().forEach((interval) -> {
             double[] timeValues = data.get(interval).stream()
-                    .mapToDouble(valueFunction)
+                    .map(instantFunction)
+                    .filter((Duration d) -> d != null)
+                    .mapToDouble((Duration d) -> Long.valueOf(d.toMillis()).doubleValue())
                     .sorted()
                     .toArray();
             OptionalDouble averageTime = DoubleStream.of(timeValues)
                     .average();
+            long drops = data.get(interval).stream().map(instantFunction).filter((Duration d) -> d == null).count();
             result.put(interval, new StatisticData(timeValues[0], timeValues[timeValues.length - 1],
                     averageTime.orElse(0.0), timeValues[timeValues.length * 50 / 100],
                     timeValues[timeValues.length * 75 / 100], timeValues[timeValues.length * 90 / 100],
-                    timeValues[timeValues.length * 95 / 100], timeValues[timeValues.length * 99 / 100]));
+                    timeValues[timeValues.length * 95 / 100], timeValues[timeValues.length * 99 / 100], drops));
         });
         return result;
+    }
+
+    public static SortedMap<Instant, DropData> calculateDrops(Map<Instant, List<ClientResult>> data) {
+        SortedMap<Instant, DropData> result = new TreeMap<>();
+        data.keySet().stream().forEach((interval) -> {
+            long connectValues = data.get(interval).stream()
+                    .map((ClientResult r) -> r.getConnectTime())
+                    .filter((Duration d) -> d == null)
+                    .count();
+            long serverValues = data.get(interval).stream()
+                    .map((ClientResult r) -> r.getServerReceivedTime())
+                    .filter((Duration d) -> d == null)
+                    .count();
+            long latencyValues = data.get(interval).stream()
+                    .map((ClientResult r) -> r.getLatency())
+                    .filter((Duration d) -> d == null)
+                    .count();
+            long responseValues = data.get(interval).stream()
+                    .map((ClientResult r) -> r.getResponseTime())
+                    .filter((Duration d) -> d == null)
+                    .count();
+            result.put(interval, new DropData(connectValues, serverValues, latencyValues, responseValues));
+        });
+        return result;
+    }
+
+
+    public static class DropData {
+
+        private final long connect;
+
+        private final long server;
+
+        private final long latency;
+
+        private final long response;
+
+        public DropData(long connect, long server, long latency, long response) {
+            this.connect = connect;
+            this.server = server;
+            this.latency = latency;
+            this.response = response;
+        }
+
+        public long getConnect() {
+            return connect;
+        }
+
+        public long getServer() {
+            return server;
+        }
+
+        public long getLatency() {
+            return latency;
+        }
+
+        public long getResponse() {
+            return response;
+        }
+
     }
 
 
@@ -101,8 +165,10 @@ public final class DataProcessor {
 
         private final double p99;
 
+        private final long drops;
+
         public StatisticData(double min, double max, double average, double p50, double p75, double p90, double p95,
-                double p99) {
+                double p99, long drops) {
             this.min = min;
             this.max = max;
             this.average = average;
@@ -111,6 +177,7 @@ public final class DataProcessor {
             this.p90 = p90;
             this.p95 = p95;
             this.p99 = p99;
+            this.drops = drops;
         }
 
         public double getMin() {
@@ -143,6 +210,10 @@ public final class DataProcessor {
 
         public double getP99() {
             return p99;
+        }
+
+        public long getDrops() {
+            return drops;
         }
 
     }

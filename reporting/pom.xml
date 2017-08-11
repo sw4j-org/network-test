@@ -36,6 +36,27 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.jvnet.jaxb2.maven2</groupId>
+        <artifactId>maven-jaxb2-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>Client Configuration Schema</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <schemaDirectory>${project.basedir}/src/main/resources/de/sw4j/util/network/test/report</schemaDirectory>
+              <schemaIncludes>
+                <include>config.xsd</include>
+              </schemaIncludes>
+              <generatePackage>de.sw4j.util.network.test.report</generatePackage>
+              <generateDirectory>${project.build.directory}/generated-sources/jaxb</generateDirectory>
+              <extension>true</extension>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>appassembler-maven-plugin</artifactId>
         <configuration>

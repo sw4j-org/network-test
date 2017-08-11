@@ -32,15 +32,18 @@ public class ConnectionTimeReplySocketServer implements Server {
 
     private final ServerSocket serverSocket;
 
-    public ConnectionTimeReplySocketServer(int port) throws IOException {
+    private final Integer payloadSize;
+
+    public ConnectionTimeReplySocketServer(int port, Integer payloadSize) throws IOException {
         this.serverSocket = new ServerSocket(port);
+        this.payloadSize = payloadSize;
     }
 
     @Override
     public ServerRunnable accept() throws IOException {
         Socket socket = this.serverSocket.accept();
         LOG.log(Level.FINER, "Accepted connection.");
-        return new SocketServerRunnable(new ConnectionTimeReplyRequestHandler(), socket);
+        return new SocketServerRunnable(new ConnectionTimeReplyRequestHandler(payloadSize), socket);
     }
 
     @Override

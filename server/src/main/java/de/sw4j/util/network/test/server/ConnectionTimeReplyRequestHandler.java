@@ -21,6 +21,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Base64;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,6 +34,12 @@ public class ConnectionTimeReplyRequestHandler implements RequestHandler {
 
     private static final Logger LOG = Logger.getLogger(ConnectionTimeReplyRequestHandler.class.getName());
 
+    private final Integer payloadSize;
+
+    public ConnectionTimeReplyRequestHandler(Integer payloadSize) {
+        this.payloadSize = payloadSize;
+    }
+
     @Override
     public StringBuilder handleRequest(StringBuilder request) throws RequestHandlerException {
         return this.handleRequest(request, Instant.now());
@@ -40,38 +48,53 @@ public class ConnectionTimeReplyRequestHandler implements RequestHandler {
     @Override
     public StringBuilder handleRequest(StringBuilder request, Instant received) throws RequestHandlerException {
         DateTimeFormatter dtf = DateTimeFormatter.ISO_INSTANT;
+        StringBuilder reply = new StringBuilder();
 
-        int newLinePos = request.indexOf("\n");
-        if (newLinePos >= 0) {
-            request.delete(newLinePos, request.length());
-        }
+        String[] requestParts = request.toString().split("\n");
+
         LOG.log(Level.FINEST, "Shortened request");
 
         Instant sent;
         try {
-            sent = Instant.from(dtf.parse(request));
+            sent = Instant.from(dtf.parse(requestParts[0]));
+            reply.append(requestParts[0]);
         } catch (DateTimeParseException dtpex) {
             LOG.log(Level.WARNING, "Error while parsing the request.", dtpex);
             throw new RequestHandlerException("Error while parsing the request.", dtpex);
         }
-        request.append("\n");
+        reply.append("\n");
 
         try {
-            request.append(dtf.format(received));
+            reply.append(dtf.format(received));
         } catch (DateTimeException dtex) {
             LOG.log(Level.WARNING, "Error while formating the response.", dtex);
             throw new RequestHandlerException("Error while formating the response.", dtex);
         }
-        request.append("\n");
+        reply.append("\n");
 
         StringBuilder log = new StringBuilder();
-        log.append(request);
+        log.append(reply);
         Duration duration = Duration.between(sent, received);
         log.append(duration.toString());
         log.append("\n");
         LOG.log(Level.FINE, log.toString());
 
-        return request;
+        if (payloadSize == null) {
+            if (requestParts.length > 1) {
+                for (int i = 1; i < requestParts.length; i++) {
+                    reply.append(requestParts[i]);
+                    reply.append("\n");
+                }
+            }
+        } else {
+            reply.append("\n");
+            byte[] randomPayload = new byte[payloadSize / 4 * 3];
+            Random r = new Random();
+            r.nextBytes(randomPayload);
+            reply.append(Base64.getEncoder().encodeToString(randomPayload));
+        }
+
+        return reply;
     }
 
 }

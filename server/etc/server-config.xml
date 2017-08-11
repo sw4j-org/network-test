@@ -17,4 +17,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <serverConfig xmlns="http://www.sw4j.de/schema/util/network/test/server">
   <tcpPort>9099</tcpPort>
+  <!--<payloadSize></payloadSize>-->
 </serverConfig>

@@ -53,7 +53,7 @@ public class ClientResult {
     }
 
     public Duration getConnectTime() {
-        return Duration.between(this.start, this.connected);
+        return (this.start != null && this.connected != null) ? Duration.between(this.start, this.connected) : null;
     }
 
     public Instant getServerReceived() {
@@ -61,7 +61,8 @@ public class ClientResult {
     }
 
     public Duration getServerReceivedTime() {
-        return Duration.between(this.start, this.serverReceived);
+        return (this.start != null && this.serverReceived != null) ?
+                Duration.between(this.start, this.serverReceived) : null;
     }
 
     public Instant getFirstResponse() {
@@ -69,7 +70,8 @@ public class ClientResult {
     }
 
     public Duration getLatency() {
-        return Duration.between(this.start, this.firstResponse);
+        return (this.start != null && this.firstResponse != null) ?
+                Duration.between(this.start, this.firstResponse) : null;
     }
 
     public Instant getCompleted() {
@@ -77,7 +79,7 @@ public class ClientResult {
     }
 
     public Duration getResponseTime() {
-        return Duration.between(this.start, this.completed);
+        return (this.start != null && this.completed != null) ? Duration.between(this.start, this.completed) : null;
     }
 
     public static class Builder {

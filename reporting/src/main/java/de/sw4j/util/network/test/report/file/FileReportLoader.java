@@ -21,6 +21,7 @@ import de.sw4j.util.network.test.report.common.DataProcessor;
 import de.sw4j.util.network.test.report.xml.ResultReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -28,13 +29,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.function.ToDoubleFunction;
+import java.util.function.Function;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Service;
@@ -101,22 +101,22 @@ public class FileReportLoader extends Service<Void> {
 
                 Future connectTimeChartFuture = chartExecutors.submit(() -> {
                     fillChart(connectTimeChart, connectTimeCategory, data,
-                            (ClientResult r) -> Long.valueOf(r.getConnectTime().toMillis()).doubleValue());
+                            (ClientResult r) -> r.getConnectTime());
                 });
 
                 Future serverReceivedTimeChartFuture = chartExecutors.submit(() -> {
                     fillChart(serverTimeChart, serverTimeCategory, data,
-                            (ClientResult r) -> Long.valueOf(r.getServerReceivedTime().toMillis()).doubleValue());
+                            (ClientResult r) -> r.getServerReceivedTime());
                 });
 
                 Future latencyChartFuture = chartExecutors.submit(() -> {
                     fillChart(latencyChart, latencyCategory, data,
-                            (ClientResult r) -> Long.valueOf(r.getLatency().toMillis()).doubleValue());
+                            (ClientResult r) -> r.getLatency());
                 });
 
                 Future responseTimeChartFuture = chartExecutors.submit(() -> {
                     fillChart(responseTimeChart, responseTimeCategory, data,
-                            (ClientResult r) -> Long.valueOf(r.getResponseTime().toMillis()).doubleValue());
+                            (ClientResult r) -> r.getResponseTime());
                 });
 
                 connectTimeChartFuture.get();
@@ -136,7 +136,7 @@ public class FileReportLoader extends Service<Void> {
     }
 
     private void fillChart(LineChart<String, Number> chart, CategoryAxis timeAxis, ClientResult[] data,
-            ToDoubleFunction<ClientResult> timeAggregateFunction) {
+            Function<ClientResult, Duration> timeFunction) {
         DateTimeFormatter categoryFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
         SortedMap<Instant, List<ClientResult>> minutesData = DataProcessor.partitionData(Arrays.asList(data),
@@ -148,7 +148,7 @@ public class FileReportLoader extends Service<Void> {
         });
 
         SortedMap<Instant, DataProcessor.StatisticData> calculatedData =
-                DataProcessor.calculateStatistics(minutesData, timeAggregateFunction);
+                DataProcessor.calculateStatistics(minutesData, timeFunction);
 
         timeAxis.setCategories(FXCollections.observableList(new LinkedList<>(categoriesLabels.values())));
 
