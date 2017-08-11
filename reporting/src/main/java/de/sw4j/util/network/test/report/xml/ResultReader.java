@@ -43,7 +43,7 @@ public class ResultReader {
 
     private final List<ClientResult> finalResults = new LinkedList<>();
 
-    private final AtomicReference<List<ClientResult>> results = new AtomicReference<>(new LinkedList<ClientResult>());
+    private final AtomicReference<List<ClientResult>> results = new AtomicReference<>(new LinkedList<>());
 
     private final XMLEventReader xmlReader;
 
