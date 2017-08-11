@@ -26,11 +26,9 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedMap;
-import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -88,26 +86,25 @@ public class FileReportLoader extends Service<Void> {
 
                 ResultReader resultReader = new ResultReader(new FileInputStream(dataFile));
                 resultReader.readData();
-                ClientResult[] data = resultReader.getFinalResult().toArray(new ClientResult[0]);
                 SortedMap<Instant, List<ClientResult>> partitionedData = DataProcessor.partitionData(
                         resultReader.getFinalResult(),
                         (ClientResult t) -> t.getStart().truncatedTo(ChronoUnit.MINUTES));
 
 
                 Future connectTimeChartFuture = chartExecutors.submit(() -> {
-                    fillChart(connectTimeChart, data, (ClientResult r) -> r.getConnectTime());
+                    fillChart(connectTimeChart, partitionedData, (ClientResult r) -> r.getConnectTime());
                 });
 
                 Future serverReceivedTimeChartFuture = chartExecutors.submit(() -> {
-                    fillChart(serverTimeChart, data, (ClientResult r) -> r.getServerReceivedTime());
+                    fillChart(serverTimeChart, partitionedData, (ClientResult r) -> r.getServerReceivedTime());
                 });
 
                 Future latencyChartFuture = chartExecutors.submit(() -> {
-                    fillChart(latencyChart, data, (ClientResult r) -> r.getLatency());
+                    fillChart(latencyChart, partitionedData, (ClientResult r) -> r.getLatency());
                 });
 
                 Future responseTimeChartFuture = chartExecutors.submit(() -> {
-                    fillChart(responseTimeChart, data, (ClientResult r) -> r.getResponseTime());
+                    fillChart(responseTimeChart, partitionedData, (ClientResult r) -> r.getResponseTime());
                 });
 
                 Future dropChartFuture = chartExecutors.submit(() -> {
@@ -132,20 +129,17 @@ public class FileReportLoader extends Service<Void> {
         };
     }
 
-    private void fillChart(LineChart<String, Number> chart, ClientResult[] data,
+    private void fillChart(LineChart<String, Number> chart, SortedMap<Instant, List<ClientResult>> partitionedData,
             Function<ClientResult, Duration> timeFunction) {
         DateTimeFormatter categoryFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
-        SortedMap<Instant, List<ClientResult>> minutesData = DataProcessor.partitionData(Arrays.asList(data),
-                (ClientResult t) -> t.getStart().truncatedTo(ChronoUnit.MINUTES));
-
         SortedMap<Instant, String> categoriesLabels = new TreeMap<>();
-        minutesData.keySet().stream().forEach((minute) -> {
+        partitionedData.keySet().stream().forEach((minute) -> {
             categoriesLabels.put(minute, categoryFormatter.format(minute.atZone(ZoneId.systemDefault())));
         });
 
         SortedMap<Instant, DataProcessor.StatisticData> calculatedData =
-                DataProcessor.calculateStatistics(minutesData, timeFunction);
+                DataProcessor.calculateStatistics(partitionedData, timeFunction);
 
         ((CategoryAxis)chart.getXAxis()).setCategories(FXCollections.observableList(
                 new LinkedList<>(categoriesLabels.values())));
@@ -199,8 +193,6 @@ public class FileReportLoader extends Service<Void> {
         });
     }
 
-//    private void fillChart(LineChart<String, Number> chart, ClientResult[] data,
-//            Function<ClientResult, Duration> timeFunction) {
     private void updateDrops(BarChart<String, Number> dropChart, List<ClientResult> data,
             SortedMap<Instant, DataProcessor.DropData> calculated) {
         DateTimeFormatter categoryFormatter = DateTimeFormatter.ofPattern("HH:mm");
@@ -212,9 +204,6 @@ public class FileReportLoader extends Service<Void> {
         partitionedData.keySet().stream().forEach((interval) -> {
             categoriesLabels.put(interval, categoryFormatter.format(interval.atZone(ZoneId.systemDefault())));
         });
-
-//        SortedMap<Instant, DataProcessor.StatisticData> calculatedData =
-//                DataProcessor.calculateStatistics(partitionedData, timeFunction);
 
         ((CategoryAxis)dropChart.getXAxis()).setCategories(FXCollections.observableList(
                 new LinkedList<>(categoriesLabels.values())));
