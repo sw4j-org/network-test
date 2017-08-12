@@ -5,12 +5,12 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>de.sw4j.util</groupId>
+    <groupId>org.sw4j.util</groupId>
     <artifactId>network-test</artifactId>
     <version>0.1.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>de.sw4j.util.network-test</groupId>
+  <groupId>org.sw4j.util.network-test</groupId>
   <artifactId>server</artifactId>
   <packaging>jar</packaging>
 
@@ -18,7 +18,7 @@
 
   <description>This are server implementations to test networks with java programs.</description>
 
-  <url>https://uweplonus.github.io/network-test/server/</url>
+  <url>https://sw4j-org.github.io/network-test/server/</url>
 
   <dependencies>
     <dependency>
@@ -43,11 +43,11 @@
               <goal>generate</goal>
             </goals>
             <configuration>
-              <schemaDirectory>${project.basedir}/src/main/resources/de/sw4j/util/network/test/server</schemaDirectory>
+              <schemaDirectory>${project.basedir}/src/main/resources/org/sw4j/util/network/test/server</schemaDirectory>
               <schemaIncludes>
                 <include>config.xsd</include>
               </schemaIncludes>
-              <generatePackage>de.sw4j.util.network.test.server</generatePackage>
+              <generatePackage>org.sw4j.util.network.test.server</generatePackage>
               <generateDirectory>${project.build.directory}/generated-sources/jaxb</generateDirectory>
               <extension>true</extension>
             </configuration>
@@ -65,7 +65,7 @@
                 <platform>booter-unix</platform>
                 <platform>booter-windows</platform>
               </platforms>
-              <mainClass>de.sw4j.util.network.test.server.ReplyServer</mainClass>
+              <mainClass>org.sw4j.util.network.test.server.ReplyServer</mainClass>
               <showConsoleWindow>true</showConsoleWindow>
             </daemon>
           </daemons>
