@@ -220,7 +220,7 @@
   </profiles>
 
   <scm>
-    <developerConnection>scm:git:ssh://git@github.com:sw4j-org/network-test.git</developerConnection>
+    <developerConnection>scm:git:ssh://git@github.com/sw4j-org/network-test.git</developerConnection>
     <url>https://github.com/sw4j-org/network-test</url>
   </scm>
 
