@@ -4,7 +4,7 @@
 
   <groupId>org.sw4j.util</groupId>
   <artifactId>network-test</artifactId>
-  <version>0.2.1-SNAPSHOT</version>
+  <version>0.2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Network Test Utilities</name>
