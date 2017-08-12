@@ -5,12 +5,12 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>de.sw4j.util</groupId>
+    <groupId>org.sw4j.util</groupId>
     <artifactId>network-test</artifactId>
     <version>0.1.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>de.sw4j.util.network-test</groupId>
+  <groupId>org.sw4j.util.network-test</groupId>
   <artifactId>common</artifactId>
   <packaging>jar</packaging>
 
@@ -18,6 +18,6 @@
 
   <description>This are the common classes for the utilities to test networks with java programs.</description>
 
-  <url>https://uweplonus.github.io/network-test/common/</url>
+  <url>https://sw4j-org.github.io/network-test/common/</url>
 
 </project>
