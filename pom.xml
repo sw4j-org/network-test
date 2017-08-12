@@ -299,10 +299,13 @@
       </distributionManagement>
     </profile>
     <profile>
-      <id>development</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
+      <id>site-generation</id>
+      <distributionManagement>
+        <site>
+          <id>github</id>
+          <url>scm:git:https://github.com/sw4j-org/network-test.git</url>
+        </site>
+      </distributionManagement>
     </profile>
   </profiles>
 
@@ -315,12 +318,5 @@
     <url>https://github.com/sw4j-org/network-test</url>
     <tag>HEAD</tag>
   </scm>
-
-  <distributionManagement>
-    <site>
-      <id>github</id>
-      <url>scm:git:https://github.com/sw4j-org/network-test.git</url>
-    </site>
-  </distributionManagement>
 
 </project>
