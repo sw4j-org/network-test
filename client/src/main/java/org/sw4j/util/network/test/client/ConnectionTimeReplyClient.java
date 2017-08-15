@@ -16,7 +16,6 @@
  */
 package org.sw4j.util.network.test.client;
 
-import org.sw4j.util.network.test.client.ClientConfigType;
 import org.sw4j.util.network.test.common.ClientResult;
 import java.io.File;
 import java.io.IOException;

@@ -16,7 +16,6 @@
  */
 package org.sw4j.util.network.test.server;
 
-import org.sw4j.util.network.test.server.ServerConfigType;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
