@@ -16,7 +16,6 @@
  */
 package org.sw4j.util.network.test.client;
 
-import org.sw4j.util.network.test.client.ClientConfigType;
 import org.sw4j.util.network.test.common.ClientResult;
 import java.io.File;
 import java.io.IOException;
@@ -92,8 +91,8 @@ public class ConnectionTimeReplyClient {
             try {
                 SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
                 Schema configSchema = schemaFactory.newSchema(getClass().getClassLoader().getResource(
-                        "de/sw4j/util/network/test/client/config.xsd"));
-                JAXBContext jaxbContext = JAXBContext.newInstance("de.sw4j.util.network.test.client");
+                        "org/sw4j/util/network/test/client/config.xsd"));
+                JAXBContext jaxbContext = JAXBContext.newInstance("org.sw4j.util.network.test.client");
                 Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
                 unmarshaller.setSchema(configSchema);
                 JAXBElement<ClientConfigType> conf = unmarshaller.unmarshal(
