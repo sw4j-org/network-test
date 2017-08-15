@@ -4,7 +4,7 @@
 
   <groupId>org.sw4j.util</groupId>
   <artifactId>network-test</artifactId>
-  <version>0.1.1</version>
+  <version>0.1.2-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Network Test Utilities</name>
@@ -300,7 +300,7 @@
   <scm>
     <developerConnection>scm:git:ssh://git@github.com/sw4j-org/network-test.git</developerConnection>
     <url>https://github.com/sw4j-org/network-test</url>
-    <tag>v0.1.1</tag>
+    <tag>v0.1.0</tag>
   </scm>
 
   <distributionManagement>
