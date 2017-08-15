@@ -16,7 +16,6 @@
  */
 package org.sw4j.util.network.test.server;
 
-import org.sw4j.util.network.test.server.ServerConfigType;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
@@ -78,8 +77,8 @@ public class ReplyServer {
                 SchemaFactory schemaFactory = SchemaFactory.newInstance(
                         XMLConstants.W3C_XML_SCHEMA_NS_URI);
                 Schema configSchema = schemaFactory.newSchema(getClass().getClassLoader().getResource(
-                        "de/sw4j/util/network/test/server/config.xsd"));
-                JAXBContext jaxbContext = JAXBContext.newInstance("de.sw4j.util.network.test.server");
+                        "org/sw4j/util/network/test/server/config.xsd"));
+                JAXBContext jaxbContext = JAXBContext.newInstance("org.sw4j.util.network.test.server");
                 Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
                 unmarshaller.setSchema(configSchema);
                 JAXBElement<ServerConfigType> conf = unmarshaller.unmarshal(
