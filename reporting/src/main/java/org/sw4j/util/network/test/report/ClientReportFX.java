@@ -88,8 +88,8 @@ public class ClientReportFX extends Application implements ApplicationShutdown {
             try {
                 SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
                 Schema configSchema = schemaFactory.newSchema(getClass().getClassLoader().getResource(
-                        "de/sw4j/util/network/test/report/config.xsd"));
-                JAXBContext jaxbContext = JAXBContext.newInstance("de.sw4j.util.network.test.report");
+                        "org/sw4j/util/network/test/report/config.xsd"));
+                JAXBContext jaxbContext = JAXBContext.newInstance("org.sw4j.util.network.test.report");
                 Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
                 unmarshaller.setSchema(configSchema);
                 JAXBElement<ReportConfigType> conf = unmarshaller.unmarshal(
@@ -156,8 +156,8 @@ public class ClientReportFX extends Application implements ApplicationShutdown {
         try {
             SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
             Schema configSchema = schemaFactory.newSchema(getClass().getClassLoader().getResource(
-                    "de/sw4j/util/network/test/report/config.xsd"));
-            JAXBContext jaxbContext = JAXBContext.newInstance("de.sw4j.util.network.test.report");
+                    "org/sw4j/util/network/test/report/config.xsd"));
+            JAXBContext jaxbContext = JAXBContext.newInstance("org.sw4j.util.network.test.report");
             Marshaller marshaller = jaxbContext.createMarshaller();
             marshaller.setSchema(configSchema);
 
